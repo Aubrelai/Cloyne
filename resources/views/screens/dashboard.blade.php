@@ -62,13 +62,15 @@
 
         <section class="card grow-1">
             <h2 class="card__title">Running searches</h2>
-            @foreach ($searches as $s)
-                <div>
-                    <div class="split"><strong>{{ $s['name'] }}</strong><span class="mono muted">{{ $s['found'] }} found</span></div>
-                    <div class="bar" style="margin: 6px 0"><div class="bar__fill" style="width: {{ $s['progress'] }}%"></div></div>
-                    <div class="caption">{{ $s['step'] }} · {{ $s['progress'] }}%</div>
+            @forelse ($searches as $s)
+                <div class="split">
+                    <div><strong>{{ $s->label() }}</strong><div class="caption">Started {{ $s->created_at->diffForHumans() }}</div></div>
+                    <x-pill tone="signal">Searching</x-pill>
                 </div>
-            @endforeach
+            @empty
+                <div class="caption">No searches running.</div>
+                <a href="{{ route('finder') }}" class="btn btn--secondary btn--sm" style="align-self: flex-start">Start a search</a>
+            @endforelse
         </section>
 
         <section class="card grow-1">

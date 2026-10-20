@@ -5,79 +5,119 @@
 @section('content')
     <div>
         <h1 class="page-title">Lead Finder</h1>
-        <div class="page-sub">Pick a type of business and an area. Cloyne finds the businesses, verifies emails and audits every site.</div>
+        <div class="page-sub">Pick a type of business and an area. Cloyne searches Google Maps and adds every business it finds to your Leads.</div>
     </div>
 
-    <form class="card" method="post" action="#">
+    @if (session('status'))
+        <div class="finding" role="status">{{ session('status') }}</div>
+    @endif
+
+    @if (! $configured)
+        <section class="card" style="border-color: var(--warning)">
+            <div class="split"><h2 class="card__title">Connect Apify to start searching</h2><x-pill tone="warning">Not connected</x-pill></div>
+            <div class="caption">Copy your API token from Apify (Settings → API &amp; Integrations), then add this line to the <span class="mono">.env</span> file in your Cloyne folder and restart Cloyne:</div>
+            <div class="mono" style="padding: 10px 12px; border-radius: var(--radius-sm); background: var(--surface-raised)">APIFY_TOKEN=your_token_here</div>
+        </section>
+    @endif
+
+    <form class="card" method="post" action="{{ route('searches.store') }}">
         @csrf
         <h2 class="card__title">New search</h2>
+
+        @if ($errors->any())
+            <div role="alert" style="display: flex; flex-direction: column; gap: 4px">
+                @foreach ($errors->all() as $error)
+                    <span><x-pill tone="danger">Error</x-pill> {{ $error }}</span>
+                @endforeach
+            </div>
+        @endif
+
         <div class="stats">
             <div class="field">
                 <label for="category" class="label">Type of business</label>
-                <input id="category" name="category" type="text" class="input" list="category-ideas" value="Dentists" placeholder="e.g. dentists, med spas, roofers">
+                <input id="category" name="category" type="text" class="input" list="category-ideas" required maxlength="80"
+                       value="{{ old('category') }}" placeholder="e.g. dentists, med spas, roofers">
                 <datalist id="category-ideas">
-                    <option value="Dentists"><option value="Med spas"><option value="Restaurants"><option value="Gyms"><option value="Law firms">
-                    <option value="Real estate agents"><option value="Auto repair"><option value="Salons"><option value="Chiropractors">
-                    <option value="Roofers"><option value="Plumbers"><option value="HVAC"><option value="Landscapers">
+                    <option value="Dentists"></option><option value="Med spas"></option><option value="Restaurants"></option>
+                    <option value="Gyms"></option><option value="Law firms"></option><option value="Real estate agents"></option>
+                    <option value="Auto repair"></option><option value="Hair salons"></option><option value="Chiropractors"></option>
+                    <option value="Roofers"></option><option value="Plumbers"></option><option value="HVAC"></option><option value="Landscapers"></option>
                 </datalist>
             </div>
             <div class="field">
-                <label for="package" class="label">Looking for leads for</label>
-                <select id="package" name="package" class="select">
-                    <option value="">Any package</option>
-                    @foreach (\App\Models\Business::packages() as $key => $pkg)
-                        <option value="{{ $key }}">{{ $pkg['name'] }}</option>
+                <label for="area" class="label">Area</label>
+                <input id="area" name="area" type="text" class="input" required maxlength="120"
+                       value="{{ old('area') }}" placeholder="e.g. Dallas, TX or Palm Beach County, FL">
+            </div>
+            <div class="field">
+                <label for="max_results" class="label">Max businesses</label>
+                <select id="max_results" name="max_results" class="select">
+                    @foreach ($maxOptions as $option)
+                        <option value="{{ $option }}" @selected((int) old('max_results', 100) === $option)>{{ number_format($option) }}</option>
                     @endforeach
                 </select>
             </div>
-            <div class="field">
-                <label for="area" class="label">Area</label>
-                <input id="area" name="area" type="text" class="input" value="Dallas metro, TX">
-            </div>
-            <div class="field">
-                <label for="max" class="label">Max results</label>
-                <select id="max" name="max" class="select"><option>500</option><option>1,000</option><option>5,000</option></select>
-            </div>
         </div>
-        <fieldset style="margin: 0; padding: 0; border: 0; display: flex; flex-wrap: wrap; gap: 20px;">
-            <legend class="label" style="margin-bottom: 8px">Sources</legend>
-            <label class="check"><input type="checkbox" name="sources[]" value="maps" checked>Google Maps</label>
-            <label class="check"><input type="checkbox" name="sources[]" value="licenses" checked>State license records <span class="caption">(where public)</span></label>
-            <label class="check"><input type="checkbox" name="repeat" value="weekly">Repeat every week</label>
-        </fieldset>
         <div class="split" style="border-top: 1px solid var(--border); padding-top: 16px; flex-wrap: wrap;">
-            <span class="caption">Estimated cost: about $0.50 for 500 places, plus verification and audits</span>
-            <button type="submit" class="btn btn--primary">Start search</button>
+            <span class="caption">Apify charges per business found. Start small (100) and check your usage at console.apify.com.</span>
+            <button type="submit" class="btn btn--primary" @disabled(! $configured)>Start search</button>
         </div>
     </form>
 
     <section class="card card--flush">
-        <div class="card__title" style="padding: 16px 16px 8px">Searches</div>
-        <div class="table-wrap">
-            <table class="table" style="min-width: 760px">
-                <thead><tr><th>Search</th><th>Found</th><th>Verified</th><th>Hot 60+</th><th style="width: 260px">Status</th><th>Repeats</th></tr></thead>
-                <tbody>
-                @foreach ($searches as $s)
-                    <tr>
-                        <td><div class="table__name">{{ $s['name'] }}</div><div class="caption">{{ $s['meta'] }}</div></td>
-                        <td class="mono">{{ $s['found'] }}</td>
-                        <td class="mono">{{ $s['verified'] }}</td>
-                        <td class="mono brand-text">{{ $s['hot'] }}</td>
-                        <td>
-                            @if ($s['status'] === 'running')
-                                <div class="caption" style="margin-bottom: 4px">{{ $s['step'] }} · {{ $s['progress'] }}%</div>
-                                <div class="bar"><div class="bar__fill" style="width: {{ $s['progress'] }}%"></div></div>
-                            @elseif ($s['status'] === 'done')
-                                <x-pill>Done</x-pill>
-                            @else
-                                <x-pill>Verification failed</x-pill> <a href="#" style="margin-left: 8px; font-weight: 600">Retry</a>
-                            @endif
-                        </td>
-                        <td @class(['muted' => $s['repeats'] === 'No'])>{{ $s['repeats'] }}</td>
-                    </tr>
-                @endforeach
-                </tbody>
-            </table>
+        <div class="split" style="padding: 16px 16px 8px">
+            <div class="card__title">Searches</div>
+            @if ($searches->contains->isRunning())
+                <form method="post" action="{{ route('searches.check') }}">
+                    @csrf
+                    <button type="submit" class="btn btn--secondary btn--sm">Check now</button>
+                </form>
+            @endif
         </div>
+
+        @if ($searches->isEmpty())
+            <div class="caption" style="padding: 0 16px 16px">No searches yet. Start one above.</div>
+        @else
+            <div class="table-wrap">
+                <table class="table" style="min-width: 720px">
+                    <thead><tr><th>Search</th><th>Found</th><th>New leads</th><th>Status</th><th></th></tr></thead>
+                    <tbody>
+                    @foreach ($searches as $search)
+                        <tr>
+                            <td>
+                                <div class="table__name">{{ $search->label() }}</div>
+                                <div class="caption">Up to {{ number_format($search->max_results) }} · started {{ $search->created_at->diffForHumans() }}</div>
+                            </td>
+                            <td class="mono">{{ is_null($search->found) ? '—' : number_format($search->found) }}</td>
+                            <td class="mono brand-text">{{ is_null($search->added) ? '—' : number_format($search->added) }}</td>
+                            <td>
+                                @if ($search->status === 'running')
+                                    <x-pill tone="signal">Searching</x-pill>
+                                    @if ($search->error)
+                                        <div class="caption" style="margin-top: 4px">{{ $search->error }}</div>
+                                    @endif
+                                @elseif ($search->status === 'done')
+                                    <x-pill tone="success">Done</x-pill>
+                                @else
+                                    <x-pill tone="danger">Failed</x-pill>
+                                    <div class="caption" style="margin-top: 4px">{{ $search->error }}</div>
+                                @endif
+                            </td>
+                            <td>
+                                @if ($search->status === 'done' && $search->added)
+                                    <a href="{{ route('leads', ['search' => $search->id]) }}" style="font-weight: 600">View leads</a>
+                                @endif
+                            </td>
+                        </tr>
+                    @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
     </section>
+
+    @if ($searches->contains->isRunning())
+        {{-- Refresh every 30 seconds while a search is running, so results appear by themselves. --}}
+        <meta http-equiv="refresh" content="30">
+    @endif
 @endsection

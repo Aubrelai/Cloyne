@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Business;
+use App\Models\Search;
+use App\Services\Apify;
+use App\Services\LeadImporter;
 use App\Support\SampleData as Data;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -20,19 +23,28 @@ class ScreenController extends Controller
             'metros' => Data::metros(),
             'dots' => Data::mapDots(),
             'labels' => Data::mapLabels(),
-            'searches' => array_filter(Data::searches(), fn ($s) => $s['status'] === 'running'),
+            'searches' => Search::where('status', 'running')->latest()->get(),
             'bookings' => array_slice(Data::bookings(), 0, 3),
         ]);
     }
 
-    public function finder(): View
+    public function finder(Apify $apify, LeadImporter $importer): View
     {
-        return view('screens.finder', ['searches' => Data::searches()]);
+        // Pull in results from any searches that finished since the last visit.
+        if (Apify::isConfigured()) {
+            Search::where('status', 'running')->get()->each->sync($apify, $importer);
+        }
+
+        return view('screens.finder', [
+            'searches' => Search::latest()->limit(50)->get(),
+            'configured' => Apify::isConfigured(),
+            'maxOptions' => SearchController::MAX_RESULT_OPTIONS,
+        ]);
     }
 
     public function leads(Request $request): View
     {
-        $filters = $request->only(['q', 'category', 'package', 'pitchable', 'state', 'score', 'email']);
+        $filters = $request->only(['q', 'search', 'category', 'package', 'pitchable', 'state', 'score', 'email']);
 
         $leads = Business::query()
             ->with(['primaryContact', 'latestAudit'])
@@ -40,6 +52,7 @@ class ScreenController extends Controller
                 ->where('name', 'like', "%{$term}%")
                 ->orWhere('phone', 'like', "%{$term}%")
                 ->orWhereHas('contacts', fn ($c) => $c->where('email', 'like', "%{$term}%"))))
+            ->when($filters['search'] ?? null, fn ($q, $search) => $q->where('search_id', $search))
             ->when($filters['category'] ?? null, fn ($q, $category) => $q->where('category', $category))
             ->when($filters['package'] ?? null, fn ($q, $package) => $q->where('package', $package))
             ->when($filters['pitchable'] ?? null, fn ($q) => $q->where(fn ($w) => $w
@@ -70,6 +83,7 @@ class ScreenController extends Controller
             'categories' => Business::query()->distinct()->orderBy('category')->pluck('category'),
             'packages' => Business::packages(),
             'states' => Business::query()->whereNotNull('state')->distinct()->orderBy('state')->pluck('state'),
+            'fromSearch' => ! empty($filters['search']) ? Search::find($filters['search']) : null,
         ]);
     }
 

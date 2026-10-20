@@ -45,6 +45,8 @@ php artisan db:seed
 php artisan serve
 ```
 
+**Lead Finder setup:** add your Apify token to `.env` as `APIFY_TOKEN=...` (get it in Apify Console → Settings → API & Integrations), then restart Cloyne.
+
 `db:seed` loads 8 sample businesses into the database so the Leads screen has data. Run `php artisan test` any time to check that things still work.
 
 Open http://127.0.0.1:8000 in your browser. Leave `php artisan serve` running while you edit; refresh the page to see changes.
@@ -64,7 +66,8 @@ Prefer the terminal? Install Claude Code from PowerShell with `irm https://claud
 
 - ~~Database tables for businesses, contacts and audits~~ ✓ done (`app/Models/Business.php`, `Contact.php`, `Audit.php`)
 - Database tables for campaigns, messages and bookings
-- Background workers: Lead Finder searches (Apify), email verification, AI audits (Claude API), sending (Instantly), reply checking
+- ~~Lead Finder searches (Apify)~~ ✓ done
+- Background workers: email verification, AI audits (Claude API), sending (Instantly), reply checking
 - CRM connection: push booked leads to the LaiQ Digital CRM's API; receive deal-stage webhooks
 - Logins and roles (Owner, Reviewer, Viewer)
 - Hosting on Railway or Render (not HostGator shared hosting, which can't run always-on workers)

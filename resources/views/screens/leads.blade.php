@@ -8,6 +8,9 @@
         <div>
             <h1 class="page-title">Leads</h1>
             <div class="page-sub">{{ number_format($total) }} businesses · {{ number_format($hotCount) }} scored 60+</div>
+            @if ($fromSearch)
+                <div class="caption" style="margin-top: 4px">Showing leads from <strong>{{ $fromSearch->label() }}</strong> · <a href="{{ route('leads') }}">Show all</a></div>
+            @endif
         </div>
         <div class="btn-row">
             <button type="button" class="btn btn--secondary" disabled>Export</button>
@@ -18,6 +21,9 @@
     <form class="filters" method="get" action="{{ route('leads') }}">
         @if (! empty($filters['q']))
             <input type="hidden" name="q" value="{{ $filters['q'] }}">
+        @endif
+        @if (! empty($filters['search']))
+            <input type="hidden" name="search" value="{{ $filters['search'] }}">
         @endif
         <div class="field">
             <label for="f-category" class="label">Category</label>

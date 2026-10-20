@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ScreenController;
+use App\Http\Controllers\SearchController;
 use Illuminate\Support\Facades\Route;
 
 Route::controller(ScreenController::class)->group(function () {
@@ -13,3 +14,6 @@ Route::controller(ScreenController::class)->group(function () {
     Route::get('/booked', 'booked')->name('booked');
     Route::get('/settings', 'settings')->name('settings');
 });
+
+Route::post('/lead-finder/searches', [SearchController::class, 'store'])->name('searches.store');
+Route::post('/lead-finder/check', [SearchController::class, 'check'])->name('searches.check');

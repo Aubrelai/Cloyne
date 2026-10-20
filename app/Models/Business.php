@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
@@ -34,6 +35,11 @@ class Business extends Model
             'rating' => 'decimal:1',
             'license_expires_on' => 'date',
         ];
+    }
+
+    public function search(): BelongsTo
+    {
+        return $this->belongsTo(Search::class);
     }
 
     public function contacts(): HasMany

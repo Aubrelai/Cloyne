@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    // Lead Finder: Google Maps scraping through Apify (https://apify.com)
+    'apify' => [
+        'token' => env('APIFY_TOKEN'),
+        'maps_actor' => env('APIFY_MAPS_ACTOR', 'compass/crawler-google-places'),
+    ],
+
 ];
