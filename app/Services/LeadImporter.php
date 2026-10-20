@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Business;
 use App\Models\Search;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /** Turns Google Maps results from Apify into Business rows. */
@@ -17,6 +18,7 @@ class LeadImporter
     {
         $added = 0;
         $found = 0;
+        $dismissed = DB::table('dismissed_places')->pluck('place_id')->flip();
 
         foreach ($items as $item) {
             if (! empty($item['permanentlyClosed']) || blank($item['title'] ?? null)) {
@@ -40,6 +42,9 @@ class LeadImporter
             ];
 
             $placeId = $item['placeId'] ?? null;
+            if ($placeId && $dismissed->has($placeId)) {
+                continue; // you deleted this business before
+            }
 
             $existing = $placeId
                 ? Business::where('place_id', $placeId)->first()

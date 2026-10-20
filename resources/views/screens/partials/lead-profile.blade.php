@@ -105,5 +105,11 @@
         @else
             <span class="caption">Add <span class="mono">ANTHROPIC_API_KEY</span> to <span class="mono">.env</span> to audit.</span>
         @endif
+        <form method="post" action="{{ route('leads.destroy', $lead) }}"
+              onsubmit="return confirm('Delete {{ addslashes($lead->name) }}? This can’t be undone, and it won’t come back in future searches.')">
+            @csrf
+            @method('DELETE')
+            <button type="submit" class="btn btn--ghost">Delete</button>
+        </form>
     </div>
 </aside>

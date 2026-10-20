@@ -105,14 +105,23 @@
             @endif
         </section>
     @else
+        <form id="bulk-delete" method="post" action="{{ route('leads.destroy-many') }}"
+              onsubmit="return confirm('Delete the selected leads? This can’t be undone, and they won’t come back in future searches.')">
+            @csrf
+        </form>
         <div class="row">
             <div class="card card--flush grow-main">
+                <div class="split" style="padding: 8px 12px; border-bottom: 1px solid var(--border)">
+                    <span class="caption" id="selected-count">Tick leads to delete them</span>
+                    <button type="submit" form="bulk-delete" class="btn btn--ghost btn--sm" id="delete-selected" disabled>Delete selected</button>
+                </div>
                 <div class="table-wrap">
                     <table class="table">
-                        <thead><tr><th>Business</th><th>Category</th><th>Score</th><th>Best fit</th><th>Pitch now</th><th>Email</th><th>Stage</th></tr></thead>
+                        <thead><tr><th style="width: 32px"><input type="checkbox" id="select-all" aria-label="Select all leads on this page"></th><th>Business</th><th>Category</th><th>Score</th><th>Best fit</th><th>Pitch now</th><th>Email</th><th>Stage</th></tr></thead>
                         <tbody>
                         @foreach ($leads as $lead)
                             <tr @class(['is-selected' => $selected && $selected->id === $lead->id])>
+                                <td><input type="checkbox" name="ids[]" value="{{ $lead->id }}" form="bulk-delete" class="lead-check" aria-label="Select {{ $lead->name }}"></td>
                                 <td>
                                     <a href="{{ request()->fullUrlWithQuery(['lead' => $lead->id]) }}" class="table__name" style="color: var(--ink); text-decoration: none">{{ $lead->name }}</a>
                                     <div class="caption">{{ $lead->location() }}</div>
@@ -170,8 +179,30 @@
             @endif
         </div>
     @endif
+
+    <script>
+        // Bulk delete: keep the button and count in step with the ticked boxes.
+        (function () {
+            const all = document.getElementById('select-all');
+            const boxes = Array.from(document.querySelectorAll('.lead-check'));
+            const button = document.getElementById('delete-selected');
+            const label = document.getElementById('selected-count');
+            if (!all || !button) return;
+            const update = () => {
+                const n = boxes.filter(b => b.checked).length;
+                button.disabled = n === 0;
+                button.textContent = n ? 'Delete ' + n + (n === 1 ? ' lead' : ' leads') : 'Delete selected';
+                label.textContent = n ? n + ' selected' : 'Tick leads to delete them';
+                all.checked = n > 0 && n === boxes.length;
+            };
+            all.addEventListener('change', () => { boxes.forEach(b => b.checked = all.checked); update(); });
+            boxes.forEach(b => b.addEventListener('change', update));
+        })();
+    </script>
     @if ($queued > 0)
         {{-- Refresh every 20 seconds while audits are running, so scores appear by themselves. --}}
-        <meta http-equiv="refresh" content="20">
+        <script>
+            setTimeout(() => { if (!document.querySelector('.lead-check:checked')) location.reload(); }, 20000);
+        </script>
     @endif
 @endsection

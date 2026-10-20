@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuditController;
+use App\Http\Controllers\LeadController;
 use App\Http\Controllers\ScreenController;
 use App\Http\Controllers\SearchController;
 use Illuminate\Support\Facades\Route;
@@ -20,3 +21,5 @@ Route::post('/lead-finder/searches', [SearchController::class, 'store'])->name('
 Route::post('/lead-finder/check', [SearchController::class, 'check'])->name('searches.check');
 Route::post('/leads/{business}/audit', [AuditController::class, 'one'])->name('audits.one');
 Route::post('/leads/audit', [AuditController::class, 'many'])->name('audits.many');
+Route::delete('/leads/{business}', [LeadController::class, 'destroy'])->name('leads.destroy');
+Route::post('/leads/delete', [LeadController::class, 'destroyMany'])->name('leads.destroy-many');
