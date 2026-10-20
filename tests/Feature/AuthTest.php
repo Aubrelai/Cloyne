@@ -95,7 +95,7 @@ class AuthTest extends TestCase
         foreach (['/', '/lead-finder', '/leads', '/review', '/campaigns', '/inbox', '/booked', '/settings'] as $url) {
             $this->get($url)->assertOk();
         }
-        $this->get('/leads')->assertDontSee('Tick leads to delete them')->assertDontSee('>Delete</button>', false);
+        $this->get('/leads')->assertDontSee('id="delete-selected"', false)->assertDontSee('id="select-all"', false)->assertDontSee('>Delete</button>', false);
         $this->get('/lead-finder')->assertDontSee('Start search');
 
         $this->delete("/leads/{$lead->id}")->assertForbidden();

@@ -196,6 +196,7 @@
         </div>
     @endif
 
+    @can('edit')
     <script>
         // Bulk delete: keep the button and count in step with the ticked boxes.
         (function () {
@@ -215,6 +216,7 @@
             boxes.forEach(b => b.addEventListener('change', update));
         })();
     </script>
+    @endcan
     @if ($queued > 0)
         {{-- Refresh every 20 seconds while audits are running, so scores appear by themselves. --}}
         <script>
