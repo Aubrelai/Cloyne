@@ -8,7 +8,7 @@
         <div>
             <h2 style="font: 600 20px/28px var(--font-display)">{{ $lead->name }}</h2>
             <div class="caption" style="margin-top: 2px">
-                {{ collect([$lead->trade, $lead->location(), $audit ? 'Audited ' . $audit->audited_at->diffForHumans() : 'Not audited yet'])->filter()->implode(' · ') }}
+                {{ collect([$lead->category, $lead->location(), $audit ? 'Audited ' . $audit->audited_at->diffForHumans() : 'Not audited yet'])->filter()->implode(' · ') }}
             </div>
         </div>
         <a href="{{ request()->fullUrlWithQuery(['lead' => null]) }}" class="btn btn--ghost btn--sm" aria-label="Close lead profile"><x-icon name="close" width="16" height="16" /></a>
@@ -40,6 +40,17 @@
             <dt>Reviews</dt><dd>{{ $lead->rating ? $lead->rating . ' stars · ' . $lead->review_count . ' on Google' : '—' }}</dd>
         </dl>
     </div>
+
+    @if ($lead->package)
+        @php $pkg = \App\Models\Business::packages()[$lead->package] ?? null; @endphp
+        <div class="panel__section">
+            <div class="label">Best package</div>
+            <div class="split" style="margin-top: 4px"><strong>{{ $lead->packageName() }}</strong><span class="caption">{{ $pkg['price'] ?? '' }}</span></div>
+            @if ($pkg)
+                <div class="caption" style="margin-top: 2px">{{ $pkg['fits'] }}</div>
+            @endif
+        </div>
+    @endif
 
     @if ($audit)
         <div class="card__title" style="padding: 12px 16px 4px">Why it scored {{ $audit->score }}</div>

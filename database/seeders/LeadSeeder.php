@@ -14,10 +14,13 @@ class LeadSeeder extends Seeder
 {
     public function run(): void
     {
+        // Sample businesses from an earlier version, replaced by the ones below.
+        Business::whereIn('name', ['Lone Star HVAC', 'Coastal Air Pros', 'Ridgeline Painting', 'Peak Electric'])->delete();
+
         foreach ($this->samples() as $sample) {
             $business = Business::updateOrCreate(
                 ['name' => $sample['name'], 'city' => $sample['city']],
-                collect($sample)->except(['contact', 'audit', 'pitch', 'stage'])->all()
+                collect($sample)->except(['contact', 'audit', 'pitch', 'package', 'stage'])->all()
             );
 
             if ($business->wasRecentlyCreated) {
@@ -25,7 +28,7 @@ class LeadSeeder extends Seeder
                     $business->contacts()->create($sample['contact']);
                 }
                 if ($sample['audit']) {
-                    $business->recordAudit($sample['audit'], $sample['pitch'] ?? null);
+                    $business->recordAudit($sample['audit'], $sample['pitch'] ?? null, $sample['package'] ?? null);
                 }
                 $business->update(['stage' => $sample['stage']]);
             }
@@ -41,7 +44,7 @@ class LeadSeeder extends Seeder
     {
         return [
             [
-                'name' => 'Sunshine Roofing Co.', 'trade' => 'Roofing', 'city' => 'Wellington', 'state' => 'FL',
+                'name' => 'Sunshine Roofing Co.', 'category' => 'Roofing', 'city' => 'Wellington', 'state' => 'FL',
                 'phone' => '(561) 555-0142', 'website' => 'https://example.com/sunshine-roofing',
                 'rating' => 4.8, 'review_count' => 126, 'license_status' => 'Active', 'license_expires_on' => '2027-08-31',
                 'stage' => 'draft_ready',
@@ -54,9 +57,10 @@ class LeadSeeder extends Seeder
                     $this->check('License active', 'From state license records', true, 10),
                 ],
                 'pitch' => 'Paying for Meta clicks that land on a page with no way to book.',
+                'package' => 'ads_crm',
             ],
             [
-                'name' => 'Bayside Plumbing', 'trade' => 'Plumbing', 'city' => 'Tampa', 'state' => 'FL',
+                'name' => 'Bayside Plumbing', 'category' => 'Plumbing', 'city' => 'Tampa', 'state' => 'FL',
                 'phone' => '(813) 555-0187', 'rating' => 4.9, 'review_count' => 212, 'stage' => 'emailed',
                 'contact' => ['name' => 'Dana Reyes', 'role' => 'Owner', 'email' => 'dana@example.com', 'email_status' => 'verified'],
                 'audit' => [
@@ -68,9 +72,10 @@ class LeadSeeder extends Seeder
                     $this->check('No video on homepage', 'Useful for the creative pitch', false, 0),
                 ],
                 'pitch' => 'Tried Meta ads before and stopped: ask what went wrong.',
+                'package' => 'ads_crm',
             ],
             [
-                'name' => 'Lone Star HVAC', 'trade' => 'HVAC', 'city' => 'Houston', 'state' => 'TX',
+                'name' => 'Bright Smile Dental', 'category' => 'Dentist', 'city' => 'Houston', 'state' => 'TX',
                 'phone' => '(713) 555-0110', 'rating' => 4.6, 'review_count' => 88, 'stage' => 'audited',
                 'contact' => ['name' => 'Chris Nguyen', 'role' => 'Manager', 'email' => 'chris@example.com', 'email_status' => 'verified'],
                 'audit' => [
@@ -81,23 +86,25 @@ class LeadSeeder extends Seeder
                     $this->check('Strong reviews, weak site', 'Site looks fine', false, 0),
                 ],
                 'pitch' => 'Running ads into a broken contact form.',
+                'package' => 'scale',
             ],
             [
-                'name' => 'Peak Electric', 'trade' => 'Electrical', 'city' => 'Denver', 'state' => 'CO',
+                'name' => 'Iron Peak Fitness', 'category' => 'Gym', 'city' => 'Denver', 'state' => 'CO',
                 'phone' => '(303) 555-0164', 'rating' => 4.7, 'review_count' => 54, 'stage' => 'booked',
                 'contact' => ['name' => 'Jordan Blake', 'role' => 'Owner', 'email' => 'jordan@example.com', 'email_status' => 'verified'],
                 'audit' => [
                     $this->check('Meta Pixel installed', 'Tracking set up, no active ads', true, 15),
                     $this->check('No lead form or booking', 'Phone number only', false, 15),
                     $this->check('Strong reviews, dated site', '4.7 stars, not mobile-friendly', true, 15),
-                    $this->check('Active license, recently issued', 'Licensed 2 years ago', true, 10),
+                    $this->check('Recently opened', 'On Google for 2 years', true, 10),
                     $this->check('Google Ads tag present', 'Has a marketing budget', true, 5),
                     $this->check('Active Meta ads', 'None running', false, 0),
                 ],
                 'pitch' => 'Good reviews, but the site gives visitors no way to book.',
+                'package' => 'website',
             ],
             [
-                'name' => 'Coastal Air Pros', 'trade' => 'HVAC', 'city' => 'Miami', 'state' => 'FL',
+                'name' => 'Glow Med Spa', 'category' => 'Med spa', 'city' => 'Miami', 'state' => 'FL',
                 'rating' => 4.4, 'review_count' => 39, 'stage' => 'audited',
                 'contact' => ['name' => null, 'role' => null, 'email' => 'info@example.com', 'email_status' => 'risky'],
                 'audit' => [
@@ -108,9 +115,10 @@ class LeadSeeder extends Seeder
                     $this->check('Strong reviews, weak site', 'Few reviews', false, 0),
                 ],
                 'pitch' => 'Already well set up; better creative is the only angle.',
+                'package' => 'scale',
             ],
             [
-                'name' => 'Desert Sun Landscaping', 'trade' => 'Landscaping', 'city' => 'Phoenix', 'state' => 'AZ',
+                'name' => 'Desert Sun Landscaping', 'category' => 'Landscaping', 'city' => 'Phoenix', 'state' => 'AZ',
                 'rating' => 4.5, 'review_count' => 61, 'stage' => 'audited',
                 'contact' => ['name' => null, 'role' => null, 'email' => 'hello@example.com', 'email_status' => 'verified'],
                 'audit' => [
@@ -121,9 +129,10 @@ class LeadSeeder extends Seeder
                     $this->check('Meta Pixel installed', 'Not found', false, 0),
                 ],
                 'pitch' => 'Strong reviews but no online way to book.',
+                'package' => 'website',
             ],
             [
-                'name' => 'Ridgeline Painting', 'trade' => 'Painting', 'city' => 'Dallas', 'state' => 'TX',
+                'name' => 'Casa Verde Taqueria', 'category' => 'Restaurant', 'city' => 'Dallas', 'state' => 'TX',
                 'rating' => 3.9, 'review_count' => 12, 'stage' => 'audited',
                 'contact' => null,
                 'audit' => [
@@ -132,9 +141,10 @@ class LeadSeeder extends Seeder
                     $this->check('Strong reviews, weak site', 'Only 12 reviews', false, 0),
                 ],
                 'pitch' => 'No website: offer the $500 site as a first step.',
+                'package' => 'website',
             ],
             [
-                'name' => 'Gulf Coast Pools', 'trade' => 'Pools', 'city' => 'Sarasota', 'state' => 'FL',
+                'name' => 'Gulf Coast Pools', 'category' => 'Pools', 'city' => 'Sarasota', 'state' => 'FL',
                 'rating' => 4.1, 'review_count' => 20, 'stage' => 'excluded',
                 'contact' => ['name' => null, 'role' => null, 'email' => 'office@example.com', 'email_status' => 'bounced'],
                 'audit' => [

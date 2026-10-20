@@ -30,16 +30,27 @@ class LeadsPageTest extends TestCase
             ->assertDontSee('Gulf Coast Pools');
     }
 
+    public function test_package_filter_only_shows_matching_leads(): void
+    {
+        $this->seed(LeadSeeder::class);
+
+        $this->get('/leads?package=website')
+            ->assertOk()
+            ->assertSee('Casa Verde Taqueria')
+            ->assertDontSee('Sunshine Roofing Co.');
+    }
+
     public function test_recording_an_audit_updates_the_business_score(): void
     {
-        $business = Business::create(['name' => 'Test Roofing', 'trade' => 'Roofing']);
+        $business = Business::create(['name' => 'Test Roofing', 'category' => 'Roofing']);
 
         $business->recordAudit([
             ['title' => 'Active Meta ads', 'detail' => '1 ad', 'passed' => true, 'points' => 25],
             ['title' => 'Meta Pixel installed', 'detail' => 'Found', 'passed' => true, 'points' => 15],
-        ]);
+        ], 'Running ads with no booking.', 'ads_crm');
 
         $this->assertSame(40, $business->fresh()->score);
+        $this->assertSame('ads_crm', $business->fresh()->package);
         $this->assertSame('audited', $business->fresh()->stage);
     }
 

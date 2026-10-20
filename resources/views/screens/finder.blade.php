@@ -5,7 +5,7 @@
 @section('content')
     <div>
         <h1 class="page-title">Lead Finder</h1>
-        <div class="page-sub">Pick a trade and an area. Cloyne finds the businesses, verifies emails and audits every site.</div>
+        <div class="page-sub">Pick a type of business and an area. Cloyne finds the businesses, verifies emails and audits every site.</div>
     </div>
 
     <form class="card" method="post" action="#">
@@ -13,9 +13,21 @@
         <h2 class="card__title">New search</h2>
         <div class="stats">
             <div class="field">
-                <label for="trade" class="label">Trade</label>
-                <select id="trade" name="trade" class="select">
-                    <option>Plumbers</option><option>Roofers</option><option>HVAC</option><option>Electricians</option><option>Landscapers</option><option>Any trade (type your own)</option>
+                <label for="category" class="label">Type of business</label>
+                <input id="category" name="category" type="text" class="input" list="category-ideas" value="Dentists" placeholder="e.g. dentists, med spas, roofers">
+                <datalist id="category-ideas">
+                    <option value="Dentists"><option value="Med spas"><option value="Restaurants"><option value="Gyms"><option value="Law firms">
+                    <option value="Real estate agents"><option value="Auto repair"><option value="Salons"><option value="Chiropractors">
+                    <option value="Roofers"><option value="Plumbers"><option value="HVAC"><option value="Landscapers">
+                </datalist>
+            </div>
+            <div class="field">
+                <label for="package" class="label">Looking for leads for</label>
+                <select id="package" name="package" class="select">
+                    <option value="">Any package</option>
+                    @foreach (\App\Models\Business::packages() as $key => $pkg)
+                        <option value="{{ $key }}">{{ $pkg['name'] }}</option>
+                    @endforeach
                 </select>
             </div>
             <div class="field">

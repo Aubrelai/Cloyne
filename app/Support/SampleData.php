@@ -60,10 +60,10 @@ class SampleData
     public static function searches(): array
     {
         return [
-            ['name' => 'Plumbers · Dallas metro, TX', 'meta' => 'Google Maps + license records · started 1h ago', 'found' => '612', 'verified' => '201', 'hot' => '38', 'status' => 'running', 'step' => 'Auditing websites', 'progress' => 64, 'repeats' => 'No'],
-            ['name' => 'HVAC · all of Florida', 'meta' => 'Google Maps + license records · started 3h ago', 'found' => '1,840', 'verified' => '404', 'hot' => '—', 'status' => 'running', 'step' => 'Verifying emails', 'progress' => 22, 'repeats' => 'Weekly'],
+            ['name' => 'Dentists · Dallas metro, TX', 'meta' => 'Google Maps + license records · started 1h ago', 'found' => '612', 'verified' => '201', 'hot' => '38', 'status' => 'running', 'step' => 'Auditing websites', 'progress' => 64, 'repeats' => 'No'],
+            ['name' => 'Med spas · all of Florida', 'meta' => 'Google Maps + license records · started 3h ago', 'found' => '1,840', 'verified' => '404', 'hot' => '—', 'status' => 'running', 'step' => 'Verifying emails', 'progress' => 22, 'repeats' => 'Weekly'],
             ['name' => 'Roofers · Palm Beach County, FL', 'meta' => 'Google Maps + license records · Oct 18', 'found' => '418', 'verified' => '97', 'hot' => '29', 'status' => 'done', 'repeats' => 'Weekly'],
-            ['name' => 'Landscapers · Phoenix, AZ', 'meta' => 'Google Maps · Oct 16', 'found' => '350', 'verified' => '0', 'hot' => '—', 'status' => 'failed', 'repeats' => 'No'],
+            ['name' => 'Restaurants · Phoenix, AZ', 'meta' => 'Google Maps · Oct 16', 'found' => '350', 'verified' => '0', 'hot' => '—', 'status' => 'failed', 'repeats' => 'No'],
         ];
     }
 

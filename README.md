@@ -1,6 +1,6 @@
 # Cloyne
 
-LaiQ Digital's internal lead engine: it finds businesses in any trade and area, audits their websites and ads with AI, scores them, drafts outreach for review, and hands booked calls to the LaiQ Digital CRM.
+LaiQ Digital's internal lead engine: it finds any kind of business in any area, audits their websites and ads with AI, scores them, recommends the best-fit LaiQ package, drafts outreach for review, and hands booked calls to the LaiQ Digital CRM.
 
 Built in Laravel (PHP) with Blade views. **The Leads screen runs on the real database** (businesses, contacts, audits), with working filters, search and lead profiles. The other screens still use sample data from `app/Support/SampleData.php` until their features are built.
 
@@ -23,6 +23,7 @@ Built in Laravel (PHP) with Blade views. **The Leads screen runs on the real dat
 - **Sample data:** `app/Support/SampleData.php`. Each screen's numbers and rows come from here.
 - **Which data each screen gets:** `app/Http/Controllers/ScreenController.php`.
 - **URLs:** `routes/web.php`.
+- **LaiQ packages** (names, prices, who each one fits): `config/cloyne.php`.
 
 ## Run it on Windows
 

@@ -32,7 +32,7 @@ class ScreenController extends Controller
 
     public function leads(Request $request): View
     {
-        $filters = $request->only(['q', 'trade', 'state', 'score', 'email']);
+        $filters = $request->only(['q', 'category', 'package', 'state', 'score', 'email']);
 
         $leads = Business::query()
             ->with(['primaryContact', 'latestAudit'])
@@ -40,7 +40,8 @@ class ScreenController extends Controller
                 ->where('name', 'like', "%{$term}%")
                 ->orWhere('phone', 'like', "%{$term}%")
                 ->orWhereHas('contacts', fn ($c) => $c->where('email', 'like', "%{$term}%"))))
-            ->when($filters['trade'] ?? null, fn ($q, $trade) => $q->where('trade', $trade))
+            ->when($filters['category'] ?? null, fn ($q, $category) => $q->where('category', $category))
+            ->when($filters['package'] ?? null, fn ($q, $package) => $q->where('package', $package))
             ->when($filters['state'] ?? null, fn ($q, $state) => $q->where('state', $state))
             ->scoreTier($filters['score'] ?? null)
             ->when($filters['email'] ?? null, fn ($q, $status) => $status === 'none'
@@ -63,7 +64,8 @@ class ScreenController extends Controller
             'filters' => $filters,
             'total' => Business::count(),
             'hotCount' => Business::where('score', '>=', 60)->count(),
-            'trades' => Business::query()->distinct()->orderBy('trade')->pluck('trade'),
+            'categories' => Business::query()->distinct()->orderBy('category')->pluck('category'),
+            'packages' => Business::packages(),
             'states' => Business::query()->whereNotNull('state')->distinct()->orderBy('state')->pluck('state'),
         ]);
     }

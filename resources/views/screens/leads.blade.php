@@ -20,11 +20,20 @@
             <input type="hidden" name="q" value="{{ $filters['q'] }}">
         @endif
         <div class="field">
-            <label for="f-trade" class="label">Trade</label>
-            <select id="f-trade" name="trade" class="select">
-                <option value="">All trades</option>
-                @foreach ($trades as $trade)
-                    <option value="{{ $trade }}" @selected(($filters['trade'] ?? '') === $trade)>{{ $trade }}</option>
+            <label for="f-category" class="label">Category</label>
+            <select id="f-category" name="category" class="select">
+                <option value="">All categories</option>
+                @foreach ($categories as $category)
+                    <option value="{{ $category }}" @selected(($filters['category'] ?? '') === $category)>{{ $category }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="field">
+            <label for="f-package" class="label">Best package</label>
+            <select id="f-package" name="package" class="select">
+                <option value="">Any package</option>
+                @foreach ($packages as $key => $package)
+                    <option value="{{ $key }}" @selected(($filters['package'] ?? '') === $key)>{{ $package['name'] }}</option>
                 @endforeach
             </select>
         </div>
@@ -78,7 +87,7 @@
             <div class="card card--flush grow-main">
                 <div class="table-wrap">
                     <table class="table">
-                        <thead><tr><th>Business</th><th>Trade</th><th>Score</th><th>Email</th><th>Stage</th></tr></thead>
+                        <thead><tr><th>Business</th><th>Category</th><th>Score</th><th>Best package</th><th>Email</th><th>Stage</th></tr></thead>
                         <tbody>
                         @foreach ($leads as $lead)
                             <tr @class(['is-selected' => $selected && $selected->id === $lead->id])>
@@ -86,7 +95,7 @@
                                     <a href="{{ request()->fullUrlWithQuery(['lead' => $lead->id]) }}" class="table__name" style="color: var(--ink); text-decoration: none">{{ $lead->name }}</a>
                                     <div class="caption">{{ $lead->location() }}</div>
                                 </td>
-                                <td>{{ $lead->trade }}</td>
+                                <td>{{ $lead->category }}</td>
                                 <td>
                                     @if (is_null($lead->score))
                                         <span class="caption">Not audited</span>
@@ -94,6 +103,7 @@
                                         <x-score :value="$lead->score" />
                                     @endif
                                 </td>
+                                <td>{{ $lead->packageName() ?? '—' }}</td>
                                 <td><x-pill>{{ $lead->primaryContact?->emailLabel() ?? 'Not found' }}</x-pill></td>
                                 <td>{{ $lead->stageLabel() }}</td>
                             </tr>

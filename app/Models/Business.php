@@ -62,24 +62,37 @@ class Business extends Model
      *
      * @param  array<int, array{title: string, detail: string, passed: bool, points: int}>  $checks
      */
-    public function recordAudit(array $checks, ?string $pitch = null): Audit
+    public function recordAudit(array $checks, ?string $pitch = null, ?string $package = null): Audit
     {
         $score = min(100, (int) array_sum(array_column($checks, 'points')));
 
         $audit = $this->audits()->create([
             'checks' => $checks,
             'score' => $score,
+            'package' => $package,
             'pitch' => $pitch,
             'audited_at' => now(),
         ]);
 
         $this->score = $score;
+        $this->package = $package;
         if ($this->stage === 'new') {
             $this->stage = 'audited';
         }
         $this->save();
 
         return $audit;
+    }
+
+    /** All LaiQ packages from config/cloyne.php, keyed by their saved value. */
+    public static function packages(): array
+    {
+        return config('cloyne.packages', []);
+    }
+
+    public function packageName(): ?string
+    {
+        return $this->package ? (self::packages()[$this->package]['name'] ?? $this->package) : null;
     }
 
     public function stageLabel(): string
