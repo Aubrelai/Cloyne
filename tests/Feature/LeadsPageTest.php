@@ -17,7 +17,7 @@ class LeadsPageTest extends TestCase
 
         $this->get('/leads')
             ->assertOk()
-            ->assertSeeInOrder(['Sunshine Roofing Co.', 'Coastal Air Pros', 'Gulf Coast Pools']);
+            ->assertSeeInOrder(['Sunshine Roofing Co.', 'Glow Med Spa', 'Gulf Coast Pools']);
     }
 
     public function test_score_filter_only_shows_hot_leads(): void

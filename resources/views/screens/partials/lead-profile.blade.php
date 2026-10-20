@@ -36,7 +36,7 @@
             <dt>Email</dt><dd class="mono">{{ $contact?->email ?? '—' }}</dd>
             <dt>Phone</dt><dd class="mono">{{ $lead->phone ?? '—' }}</dd>
             <dt>Website</dt><dd>@if ($lead->website)<a href="{{ $lead->website }}" target="_blank" rel="noopener">{{ parse_url($lead->website, PHP_URL_HOST) }}</a>@else — @endif</dd>
-            <dt>License</dt><dd class="mono">{{ $lead->license_number ?? '—' }}{{ $lead->license_expires_on ? ' · exp. ' . $lead->license_expires_on->format('M Y') : '' }}</dd>
+            <dt>License</dt><dd class="mono">{{ collect([$lead->license_number, $lead->license_status, $lead->license_expires_on ? 'exp. ' . $lead->license_expires_on->format('M Y') : null])->filter()->implode(' · ') ?: '—' }}</dd>
             <dt>Reviews</dt><dd>{{ $lead->rating ? $lead->rating . ' stars · ' . $lead->review_count . ' on Google' : '—' }}</dd>
         </dl>
     </div>
