@@ -12,9 +12,21 @@
                 <div class="caption" style="margin-top: 4px">Showing leads from <strong>{{ $fromSearch->label() }}</strong> · <a href="{{ route('leads') }}">Show all</a></div>
             @endif
         </div>
-        <div class="btn-row">
-            <button type="button" class="btn btn--secondary" disabled>Export</button>
-            <button type="button" class="btn btn--primary" disabled>Add to campaign</button>
+        <div class="btn-row" style="align-items: center">
+            @if ($queued > 0)
+                <span class="caption">{{ number_format($queued) }} auditing in the background</span>
+            @endif
+            @if ($claudeConnected && $unaudited > 0)
+                <form method="post" action="{{ route('audits.many') }}">
+                    @csrf
+                    @if (! empty($filters['search']))
+                        <input type="hidden" name="search" value="{{ $filters['search'] }}">
+                    @endif
+                    <button type="submit" class="btn btn--primary">Audit {{ number_format(min($unaudited, 500)) }} {{ Str::plural('lead', $unaudited) }}</button>
+                </form>
+            @elseif (! $claudeConnected)
+                <span class="caption">Add <span class="mono">ANTHROPIC_API_KEY</span> to <span class="mono">.env</span> to audit leads</span>
+            @endif
         </div>
     </div>
 
@@ -107,7 +119,11 @@
                                 </td>
                                 <td>{{ $lead->category }}</td>
                                 <td>
-                                    @if (is_null($lead->score))
+                                    @if ($lead->audit_status === 'queued')
+                                        <x-pill tone="signal">Auditing</x-pill>
+                                    @elseif ($lead->audit_status === 'failed' && is_null($lead->score))
+                                        <x-pill tone="danger">Failed</x-pill>
+                                    @elseif (is_null($lead->score))
                                         <span class="caption">Not audited</span>
                                     @else
                                         <x-score :value="$lead->score" />
@@ -153,5 +169,9 @@
                 @include('screens.partials.lead-profile', ['lead' => $selected])
             @endif
         </div>
+    @endif
+    @if ($queued > 0)
+        {{-- Refresh every 20 seconds while audits are running, so scores appear by themselves. --}}
+        <meta http-equiv="refresh" content="20">
     @endif
 @endsection

@@ -26,6 +26,13 @@
             <button type="button" class="avatar" aria-label="Account menu">AC</button>
         </header>
 
+        @if (session('status') && ! request()->routeIs('finder'))
+            <div class="finding" role="status">{{ session('status') }}</div>
+        @endif
+        @error('audit')
+            <div role="alert"><x-pill tone="danger">Audit failed</x-pill> {{ $message }}</div>
+        @enderror
+
         @yield('content')
     </main>
 </div>

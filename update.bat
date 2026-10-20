@@ -28,7 +28,10 @@ if errorlevel 1 goto failed
 
 echo.
 echo === 5/5  Starting Cloyne ===
-echo Open http://127.0.0.1:8000 in your browser. Close this window to stop the app.
+REM Stop any old worker, then open a fresh one in its own window. It runs AI audits in the background.
+php artisan queue:restart >nul
+start "Cloyne worker (keep open)" cmd /k php artisan queue:work --tries=2 --timeout=150
+echo Open http://127.0.0.1:8000 in your browser. Close this window and the worker window to stop Cloyne.
 start "" http://127.0.0.1:8000
 php artisan serve
 goto end

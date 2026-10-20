@@ -18,8 +18,12 @@
             @endif
         </div>
         <div class="split" style="padding: 8px 0; border-bottom: 1px solid var(--border)">
-            <div><strong>Claude API</strong><div class="caption">AI audit, scoring and email drafts</div></div>
-            <x-pill tone="neutral">Step 3</x-pill>
+            <div><strong>Claude API</strong><div class="caption">AI audit, scoring and email drafts · <span class="mono">ANTHROPIC_API_KEY</span></div></div>
+            @if ($claudeConnected)
+                <x-pill tone="success">Connected</x-pill>
+            @else
+                <x-pill tone="warning">Not connected</x-pill>
+            @endif
         </div>
         <div class="split" style="padding: 8px 0; border-bottom: 1px solid var(--border)">
             <div><strong>Instantly</strong><div class="caption">Sending and inbox warm-up</div></div>

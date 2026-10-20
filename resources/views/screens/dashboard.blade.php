@@ -65,7 +65,7 @@
                 <a href="{{ route('finder') }}" class="list-link"><span><x-pill tone="warning">Setup</x-pill> Connect Apify to start finding leads</span><span class="brand-text"><strong>Set up</strong></span></a>
             @endif
             @if ($notAudited > 0)
-                <a href="{{ route('leads') }}" class="list-link"><span><strong>{{ number_format($notAudited) }} {{ Str::plural('lead', $notAudited) }}</strong> waiting for the AI audit (coming in Step 3)</span><span class="brand-text"><strong>View</strong></span></a>
+                <a href="{{ route('leads') }}" class="list-link"><span><strong>{{ number_format($notAudited) }} {{ Str::plural('lead', $notAudited) }}</strong> {{ $queued > 0 ? 'not audited yet (' . number_format($queued) . ' in progress)' : 'not audited yet' }}</span><span class="brand-text"><strong>Audit</strong></span></a>
             @endif
             @if ($hot > 0)
                 <a href="{{ route('leads', ['score' => 'hot']) }}" class="list-link"><span><strong>{{ number_format($hot) }} hot {{ Str::plural('lead', $hot) }}</strong> ready to contact</span><span class="brand-text"><strong>View</strong></span></a>

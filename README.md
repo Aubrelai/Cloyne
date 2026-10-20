@@ -44,6 +44,8 @@ php artisan migrate
 php artisan serve
 ```
 
+**AI audit setup:** add your Claude API key to `.env` as `ANTHROPIC_API_KEY=...` (console.anthropic.com → API Keys). Audits run in the "Cloyne worker" window that `update.bat` opens; keep it open.
+
 **Lead Finder setup:** add your Apify token to `.env` as `APIFY_TOKEN=...` (get it in Apify Console → Settings → API & Integrations), then restart Cloyne.
 
 Run `php artisan test` any time to check that things still work.
@@ -66,7 +68,8 @@ Prefer the terminal? Install Claude Code from PowerShell with `irm https://claud
 - ~~Database tables for businesses, contacts and audits~~ ✓ done (`app/Models/Business.php`, `Contact.php`, `Audit.php`)
 - Database tables for campaigns, messages and bookings
 - ~~Lead Finder searches (Apify)~~ ✓ done
-- Background workers: email verification, AI audits (Claude API), sending (Instantly), reply checking
+- ~~AI audit + scoring (Claude API)~~ ✓ done
+- Email verification, AI audits (Claude API), sending (Instantly), reply checking
 - CRM connection: push booked leads to the LaiQ Digital CRM's API; receive deal-stage webhooks
 - Logins and roles (Owner, Reviewer, Viewer)
 - Hosting on Railway or Render (not HostGator shared hosting, which can't run always-on workers)

@@ -7,7 +7,8 @@
         'Verified', 'In CRM', 'Active', 'Healthy', 'Done', 'Connected', 'Interested' => 'success',
         'Risky', 'Warming', 'Not now' => 'warning',
         'Bounced', 'Invalid', 'Sync failed', 'Opt-out', 'Failed', 'Verification failed' => 'danger',
-        'AI drafted', 'AI suggested reply' => 'signal',
+        'AI drafted', 'AI suggested reply', 'Auditing', 'Searching' => 'signal',
+        'Unverified' => 'neutral',
         default => 'neutral',
     };
 @endphp

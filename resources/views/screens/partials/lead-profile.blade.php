@@ -85,12 +85,25 @@
             <div class="finding" style="margin: 0 16px">Best pitch: {{ $audit->pitch }}</div>
         @endif
     @else
-        <div class="panel__section caption">This business hasn't been audited yet.</div>
+        <div class="panel__section caption">
+            @if ($lead->audit_status === 'queued')
+                Audit in progress. This page refreshes on its own.
+            @elseif ($lead->audit_status === 'failed')
+                Last audit failed: {{ $lead->audit_error }}
+            @else
+                This business hasn't been audited yet.
+            @endif
+        </div>
     @endif
 
     <div class="btn-row" style="padding: 16px">
-        <button type="button" class="btn btn--ghost" disabled>Re-run audit</button>
-        <button type="button" class="btn btn--secondary" disabled>Send to CRM</button>
-        <a href="{{ route('review') }}" class="btn btn--primary">Review draft</a>
+        @if (\App\Services\Claude::isConfigured())
+            <form method="post" action="{{ route('audits.one', $lead) }}">
+                @csrf
+                <button type="submit" @class(['btn', 'btn--secondary' => $audit, 'btn--primary' => ! $audit])>{{ $audit ? 'Re-run audit' : 'Audit now' }}</button>
+            </form>
+        @else
+            <span class="caption">Add <span class="mono">ANTHROPIC_API_KEY</span> to <span class="mono">.env</span> to audit.</span>
+        @endif
     </div>
 </aside>

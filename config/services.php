@@ -35,6 +35,14 @@ return [
         ],
     ],
 
+    // AI audit: Claude API (https://console.anthropic.com)
+    'anthropic' => [
+        'key' => env('ANTHROPIC_API_KEY'),
+        'audit_model' => env('ANTHROPIC_AUDIT_MODEL', 'claude-haiku-5-5'),
+        // Audit new leads automatically when a Lead Finder search finishes.
+        'auto_audit' => (bool) env('CLOYNE_AUTO_AUDIT', true),
+    ],
+
     // Lead Finder: Google Maps scraping through Apify (https://apify.com)
     'apify' => [
         'token' => env('APIFY_TOKEN'),

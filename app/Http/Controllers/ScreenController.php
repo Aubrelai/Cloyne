@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Business;
 use App\Models\Search;
 use App\Services\Apify;
+use App\Services\Claude;
 use App\Services\LeadImporter;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -50,6 +51,8 @@ class ScreenController extends Controller
             'searches' => Search::where('status', 'running')->latest()->get(),
             'recentSearches' => Search::where('status', 'done')->latest('finished_at')->limit(3)->get(),
             'apifyConnected' => Apify::isConfigured(),
+            'claudeConnected' => Claude::isConfigured(),
+            'queued' => Business::where('audit_status', 'queued')->count(),
         ]);
     }
 
@@ -109,6 +112,11 @@ class ScreenController extends Controller
             'packages' => Business::packages(),
             'states' => Business::query()->whereNotNull('state')->distinct()->orderBy('state')->pluck('state'),
             'fromSearch' => ! empty($filters['search']) ? Search::find($filters['search']) : null,
+            'claudeConnected' => Claude::isConfigured(),
+            'unaudited' => Business::whereNull('score')->where('stage', '!=', 'excluded')
+                ->where(fn ($q) => $q->whereNull('audit_status')->orWhere('audit_status', 'failed'))
+                ->when($filters['search'] ?? null, fn ($q, $search) => $q->where('search_id', $search))->count(),
+            'queued' => Business::where('audit_status', 'queued')->count(),
         ]);
     }
 
@@ -139,6 +147,7 @@ class ScreenController extends Controller
         return view('screens.settings', [
             'apifyConnected' => Apify::isConfigured(),
             'searchCount' => Search::count(),
+            'claudeConnected' => Claude::isConfigured(),
         ]);
     }
 }

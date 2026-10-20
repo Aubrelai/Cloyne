@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Jobs\AuditBusiness;
 use App\Services\Apify;
+use App\Services\Claude;
 use App\Services\LeadImporter;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -73,6 +75,10 @@ class Search extends Model
                 'error' => null,
                 'finished_at' => now(),
             ]);
+
+            if (config('services.anthropic.auto_audit') && Claude::isConfigured()) {
+                AuditBusiness::queueFor($this->businesses()->whereNull('score')->get());
+            }
         } catch (Throwable $e) {
             // Network hiccup or Apify error: keep it running and show the reason; the next check retries.
             $this->update(['error' => $e->getMessage()]);
