@@ -19,10 +19,9 @@ return [
     /*
     | Which packages LaiQ is selling right now. Cloyne still shows the package
     | each business fits best, but only *pitches* packages in this list.
-    | While the CRM is being debugged, outreach sells Starter only.
-    | Change in .env, e.g. CLOYNE_SELLING=website,ads_crm,scale
+    | To pause one, list the others in .env, e.g. CLOYNE_SELLING=website
     */
-    'selling' => array_filter(array_map('trim', explode(',', env('CLOYNE_SELLING', 'website')))),
+    'selling' => array_filter(array_map('trim', explode(',', env('CLOYNE_SELLING', 'website,ads_crm,scale')))),
 
     'packages' => [
 

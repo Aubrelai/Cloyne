@@ -4,7 +4,7 @@ Cloyne is LaiQ Digital's internal lead engine (internal only, never client-facin
 
 Current state: all eight screens are Blade views. The Leads screen reads the real database (`Business`, `Contact`, `Audit` models; save audits with `Business::recordAudit()`, which also updates the cached `score` and `stage`). The other screens still read `app/Support/SampleData.php`. See README.md for the file map. Run `php artisan test` after changes.
 
-Packages: `config/cloyne.php` holds every LaiQ package (Starter — Website, Growth — Ads + CRM, Scale — Full System, Other), with prices, what's included, the signs a business needs it, and the signs it's not a fit. The AI audit must use those lists. Each audit records `package` (best fit) and `pitch_package` (a smaller package that also genuinely fits). `CLOYNE_SELLING` in `.env` lists what's on sale; right now Starter only, while the CRM is debugged. `Business::pitchPackage()` decides what to pitch.
+Packages: `config/cloyne.php` holds every LaiQ package (Starter — Website, Growth — Ads + CRM, Scale — Full System, Other), with prices, what's included, the signs a business needs it, and the signs it's not a fit. The AI audit must use those lists. Each audit records `package` (best fit) and `pitch_package` (a smaller package that also genuinely fits). `CLOYNE_SELLING` in `.env` lists what's on sale; all three packages are on sale (default). `Business::pitchPackage()` decides what to pitch.
 
 Design rules (from the Cloyne design system):
 - Use the CSS variables in `public/css/cloyne.css`; never hard-code hex colors in views.
