@@ -58,6 +58,8 @@ php artisan serve
 
 **AI audit setup:** add your Claude API key to `.env` as `ANTHROPIC_API_KEY=...` (console.anthropic.com → API Keys). Audits run in the "Cloyne worker" window that `update.bat` opens; keep it open.
 
+**Email drafts:** hot leads (score 60+ with an email) get a first email written automatically; review them in **Review queue**. Sender, tone and "never say" rules are in `config/cloyne.php` → `outreach`. Your booking link and mailing address go in `.env` as `CLOYNE_BOOKING_URL=...` and `CLOYNE_MAILING_ADDRESS="..."` (the address is required by law before anything is sent).
+
 **Lead Finder setup:** add your Apify token to `.env` as `APIFY_TOKEN=...` (get it in Apify Console → Settings → API & Integrations), then restart Cloyne.
 
 Run `php artisan test` any time to check that things still work.
@@ -91,7 +93,8 @@ Prefer the terminal? Install Claude Code from PowerShell with `irm https://claud
 - Database tables for campaigns, messages and bookings
 - ~~Lead Finder searches (Apify)~~ ✓ done
 - ~~AI audit + scoring (Claude API)~~ ✓ done
-- Email verification, AI audits (Claude API), sending (Instantly), reply checking
+- ~~AI email drafts + Review queue~~ ✓ done
+- Email verification, sending (Instantly), reply checking
 - CRM connection: push booked leads to the LaiQ Digital CRM's API; receive deal-stage webhooks
 - ~~Logins and roles (Owner, Reviewer, Viewer)~~ ✓ done
 - Hosting on Railway or Render (not HostGator shared hosting, which can't run always-on workers)

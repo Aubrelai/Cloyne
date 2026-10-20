@@ -64,6 +64,6 @@ class Claude
             }
         }
 
-        throw new RuntimeException('Claude did not return an audit. Try again.');
+        throw new RuntimeException('Claude did not return an answer. Try again.');
     }
 }

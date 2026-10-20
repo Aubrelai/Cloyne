@@ -41,6 +41,10 @@ return [
         'audit_model' => env('ANTHROPIC_AUDIT_MODEL', 'claude-haiku-5-5'),
         // Audit new leads automatically when a Lead Finder search finishes.
         'auto_audit' => (bool) env('CLOYNE_AUTO_AUDIT', true),
+        // Model that writes outreach emails (better writer than the audit model).
+        'draft_model' => env('ANTHROPIC_DRAFT_MODEL', 'claude-sonnet-5-5'),
+        // Write a draft automatically when an audit finds a hot lead with an email.
+        'auto_draft' => (bool) env('CLOYNE_AUTO_DRAFT', true),
     ],
 
     // Lead Finder: Google Maps scraping through Apify (https://apify.com)

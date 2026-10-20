@@ -96,6 +96,24 @@
         </div>
     @endif
 
+    @php $draft = $lead->latestDraft; @endphp
+    @if ($draft || ($lead->score >= config('cloyne.outreach.min_score') && $contact?->email))
+        <div class="panel__section" style="display: flex; flex-direction: column; gap: 8px">
+            <div class="label">First email</div>
+            @if ($draft)
+                <div class="split">
+                    <span>{{ $draft->subject ?: $draft->statusLabel() }}</span>
+                    <x-pill :tone="['approved' => 'success', 'failed' => 'danger', 'writing' => 'signal', 'pending' => 'signal'][$draft->status] ?? 'neutral'">{{ $draft->statusLabel() }}</x-pill>
+                </div>
+                @if ($draft->status !== 'writing')
+                    <a href="{{ route('review', ['draft' => $draft->id]) }}" style="font-weight: 600">Open in Review queue</a>
+                @endif
+            @else
+                <span class="caption">Hot lead with an email. Cloyne can write the first email from this audit.</span>
+            @endif
+        </div>
+    @endif
+
     @can('edit')
     <div class="btn-row" style="padding: 16px">
         @if (\App\Services\Claude::isConfigured())
@@ -105,6 +123,13 @@
             </form>
         @else
             <span class="caption">Add <span class="mono">ANTHROPIC_API_KEY</span> to <span class="mono">.env</span> to audit.</span>
+        @endif
+        @if ($audit && \App\Services\Claude::isConfigured() && $contact?->email && $lead->stage !== 'excluded'
+            && (! $draft || in_array($draft->status, ['skipped', 'failed'], true)))
+            <form method="post" action="{{ route('drafts.write', $lead) }}">
+                @csrf
+                <button type="submit" class="btn btn--secondary">Write email</button>
+            </form>
         @endif
         <form method="post" action="{{ route('leads.destroy', $lead) }}"
               onsubmit="return confirm('Delete {{ addslashes($lead->name) }}? This can’t be undone, and it won’t come back in future searches.')">

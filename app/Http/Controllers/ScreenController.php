@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Business;
+use App\Models\Draft;
 use App\Models\Search;
 use App\Models\User;
 use App\Services\Apify;
@@ -86,7 +87,7 @@ class ScreenController extends Controller
 
         // The lead shown in the side panel: ?lead=ID, else the top row.
         $selected = $request->filled('lead')
-            ? Business::with(['primaryContact', 'latestAudit'])->find($request->integer('lead'))
+            ? Business::with(['primaryContact', 'latestAudit', 'latestDraft'])->find($request->integer('lead'))
             : $leads->first();
 
         return view('screens.leads', [
@@ -108,9 +109,47 @@ class ScreenController extends Controller
         ]);
     }
 
-    public function review(): View
+    public function review(Request $request): View
     {
-        return view('screens.review');
+        $statuses = ['pending', 'approved', 'skipped', 'failed'];
+        $status = in_array($request->query('status'), $statuses, true) ? $request->query('status') : 'pending';
+
+        // Opening a specific draft shows the tab it lives in.
+        $selected = $request->filled('draft')
+            ? Draft::with(['business.latestAudit', 'contact', 'reviewer'])->find($request->integer('draft'))
+            : null;
+        if ($selected && in_array($selected->status, $statuses, true)) {
+            $status = $selected->status;
+        }
+
+        $drafts = Draft::query()
+            ->select('drafts.*')
+            ->with('business')
+            ->join('businesses', 'businesses.id', '=', 'drafts.business_id')
+            ->where('drafts.status', $status)
+            ->orderByDesc($status === 'pending' ? 'businesses.score' : 'drafts.updated_at')
+            ->orderBy('drafts.id')
+            ->paginate(50)
+            ->withQueryString();
+
+        if (! $selected || $selected->status !== $status) {
+            $first = $drafts->first();
+            $selected = $first ? Draft::with(['business.latestAudit', 'contact', 'reviewer'])->find($first->id) : null;
+        }
+
+        $counts = Draft::query()->selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status');
+
+        return view('screens.review', [
+            'status' => $status,
+            'drafts' => $drafts,
+            'selected' => $selected,
+            'counts' => $counts,
+            'writing' => (int) ($counts['writing'] ?? 0),
+            'draftable' => Business::draftable()->count(),
+            'claudeConnected' => Claude::isConfigured(),
+            'readyToSend' => Draft::readyToSend(),
+            'outreach' => config('cloyne.outreach'),
+        ]);
     }
 
     public function campaigns(): View

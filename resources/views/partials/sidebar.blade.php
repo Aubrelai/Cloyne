@@ -3,7 +3,7 @@
         ['route' => 'dashboard', 'label' => 'Dashboard', 'icon' => 'dashboard'],
         ['route' => 'finder', 'label' => 'Lead Finder', 'icon' => 'search'],
         ['route' => 'leads', 'label' => 'Leads', 'icon' => 'list'],
-        ['route' => 'review', 'label' => 'Review queue', 'icon' => 'review'],
+        ['route' => 'review', 'label' => 'Review queue', 'icon' => 'review', 'count' => auth()->check() ? \App\Models\Draft::status('pending')->count() : 0],
         ['route' => 'campaigns', 'label' => 'Campaigns', 'icon' => 'send'],
         ['route' => 'inbox', 'label' => 'Inbox', 'icon' => 'inbox'],
         ['route' => 'booked', 'label' => 'Booked', 'icon' => 'calendar'],

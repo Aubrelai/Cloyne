@@ -58,6 +58,32 @@ class Business extends Model
         return $this->hasOne(Contact::class)->oldestOfMany();
     }
 
+    public function drafts(): HasMany
+    {
+        return $this->hasMany(Draft::class);
+    }
+
+    public function latestDraft(): HasOne
+    {
+        return $this->hasOne(Draft::class)->latestOfMany();
+    }
+
+    /**
+     * Leads that should get a first email: hot, has an email, has a package
+     * LaiQ is selling, not excluded/contacted, and no draft already in play.
+     */
+    public function scopeDraftable(Builder $query): Builder
+    {
+        $selling = self::sellingNow();
+
+        return $query
+            ->where('score', '>=', (int) config('cloyne.outreach.min_score', 60))
+            ->whereIn('stage', ['audited', 'draft_ready', 'new'])
+            ->whereHas('contacts', fn ($c) => $c->whereNotNull('email'))
+            ->where(fn ($q) => $q->whereIn('package', $selling)->orWhereIn('pitch_package', $selling))
+            ->whereDoesntHave('drafts', fn ($d) => $d->whereIn('status', Draft::ACTIVE));
+    }
+
     public function latestAudit(): HasOne
     {
         return $this->hasOne(Audit::class)->latestOfMany('audited_at');

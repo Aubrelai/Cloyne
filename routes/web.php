@@ -3,6 +3,7 @@
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DraftController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\ScreenController;
 use App\Http\Controllers\SearchController;
@@ -53,6 +54,15 @@ Route::middleware(['auth', 'fresh-password'])->group(function () {
         Route::delete('/leads/{business}', [LeadController::class, 'destroy'])->name('leads.destroy');
         Route::post('/leads/delete', [LeadController::class, 'destroyMany'])->name('leads.destroy-many');
         Route::post('/leads/delete-matching', [LeadController::class, 'destroyMatching'])->name('leads.destroy-matching');
+
+        // Review queue (Step 4). Nothing here sends email.
+        Route::post('/leads/{business}/draft', [DraftController::class, 'write'])->name('drafts.write');
+        Route::post('/review/write', [DraftController::class, 'writeMany'])->name('drafts.write-many');
+        Route::put('/review/{draft}', [DraftController::class, 'update'])->name('drafts.update');
+        Route::match(['post', 'put'], '/review/{draft}/approve', [DraftController::class, 'approve'])->name('drafts.approve');
+        Route::post('/review/{draft}/skip', [DraftController::class, 'skip'])->name('drafts.skip');
+        Route::post('/review/{draft}/rewrite', [DraftController::class, 'rewrite'])->name('drafts.rewrite');
+        Route::post('/review/{draft}/reopen', [DraftController::class, 'reopen'])->name('drafts.reopen');
     });
 
     Route::middleware('can:manage-team')->prefix('/settings/team')->name('team.')->group(function () {

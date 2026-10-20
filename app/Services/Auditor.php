@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\WriteDraft;
 use App\Models\Audit;
 use App\Models\Business;
 use Illuminate\Support\Str;
@@ -70,6 +71,12 @@ class Auditor
             'audit_status' => null,
             'audit_error' => null,
         ]);
+
+        // Hot lead with an email? Write its first email in the background.
+        if (! $disqualified && config('services.anthropic.auto_draft')
+            && Business::whereKey($business->id)->draftable()->exists()) {
+            WriteDraft::queueFor([$business]);
+        }
 
         return $audit;
     }

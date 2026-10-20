@@ -140,6 +140,29 @@ return [
         ],
     ],
 
+    /*
+    | Outreach emails (Step 4). Claude writes a first email for each hot lead
+    | from these settings; a person approves every draft before anything sends.
+    | Booking link and mailing address can be changed in .env.
+    */
+    'outreach' => [
+        'sender_name' => env('CLOYNE_SENDER_NAME', 'Aubre’ Cyriaque'),
+        'sender_title' => env('CLOYNE_SENDER_TITLE', 'CEO, LaiQ Digital'),
+        'company' => 'LaiQ Digital',
+        'booking_url' => env('CLOYNE_BOOKING_URL', 'https://admin.laiqdigital.com/booking/laiq-digital/strategy-call'),
+        // Required by law (CAN-SPAM) on every email. Nothing can be sent until it's set.
+        'mailing_address' => env('CLOYNE_MAILING_ADDRESS'),
+        'tone' => 'Friendly and direct: short, plain words, like one business owner writing to another. No hype, no jargon.',
+        'never' => [
+            'Promise results or numbers (no "double your leads", no guarantees).',
+            'Mention prices, fees or package prices. Pricing is for the call.',
+            'Fake familiarity: no "I was driving by", "I was a customer", "a friend told me", or pretending to know them.',
+        ],
+        'max_words' => 120,
+        // Hot leads (this score or higher) with an email get a draft.
+        'min_score' => 60,
+    ],
+
     /* Extras that ride on top of a package. Not recommended on their own. */
     'add_ons' => [
         'ai_receptionist' => [

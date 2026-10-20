@@ -60,6 +60,22 @@
         </div>
     </section>
 
+    <section class="card">
+        <div class="card__head">
+            <h2 class="card__title">Outreach emails</h2>
+            <span class="caption">Edit in <span class="mono">config/cloyne.php</span> (rules) and <span class="mono">.env</span> (link, address)</span>
+        </div>
+        @php $o = config('cloyne.outreach'); @endphp
+        <dl class="facts" style="grid-template-columns: 140px minmax(0, 1fr)">
+            <dt>From</dt><dd>{{ $o['sender_name'] }}, {{ $o['sender_title'] }}</dd>
+            <dt>Booking link</dt><dd>@if ($o['booking_url'])<a href="{{ $o['booking_url'] }}" target="_blank" rel="noopener">{{ $o['booking_url'] }}</a>@else <span class="caption">None: emails ask people to reply</span> @endif</dd>
+            <dt>Mailing address</dt><dd>@if ($o['mailing_address']){{ $o['mailing_address'] }}@else <x-pill tone="warning">Missing</x-pill> <span class="caption">required before sending · <span class="mono">CLOYNE_MAILING_ADDRESS</span></span>@endif</dd>
+            <dt>Tone</dt><dd>{{ $o['tone'] }}</dd>
+            <dt>Never</dt><dd>{{ implode(' ', $o['never']) }}</dd>
+            <dt>Who gets one</dt><dd>Leads scoring {{ $o['min_score'] }}+ with an email, pitching a package on sale · under {{ $o['max_words'] }} words · written by <span class="mono">{{ config('services.anthropic.draft_model') }}</span></dd>
+        </dl>
+    </section>
+
     <section class="card" id="team">
         <div class="card__head">
             <h2 class="card__title">Team</h2>
