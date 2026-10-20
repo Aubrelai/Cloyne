@@ -29,7 +29,7 @@
             </select>
         </div>
         <div class="field">
-            <label for="f-package" class="label">Best package</label>
+            <label for="f-package" class="label">Best fit</label>
             <select id="f-package" name="package" class="select">
                 <option value="">Any package</option>
                 @foreach ($packages as $key => $package)
@@ -37,6 +37,10 @@
                 @endforeach
             </select>
         </div>
+        <label class="check">
+            <input type="checkbox" name="pitchable" value="1" @checked(! empty($filters['pitchable']))>
+            Can pitch now
+        </label>
         <div class="field">
             <label for="f-state" class="label">State</label>
             <select id="f-state" name="state" class="select">
@@ -87,7 +91,7 @@
             <div class="card card--flush grow-main">
                 <div class="table-wrap">
                     <table class="table">
-                        <thead><tr><th>Business</th><th>Category</th><th>Score</th><th>Best package</th><th>Email</th><th>Stage</th></tr></thead>
+                        <thead><tr><th>Business</th><th>Category</th><th>Score</th><th>Best fit</th><th>Pitch now</th><th>Email</th><th>Stage</th></tr></thead>
                         <tbody>
                         @foreach ($leads as $lead)
                             <tr @class(['is-selected' => $selected && $selected->id === $lead->id])>
@@ -103,7 +107,16 @@
                                         <x-score :value="$lead->score" />
                                     @endif
                                 </td>
-                                <td>{{ $lead->packageName() ?? '—' }}</td>
+                                <td>{{ $lead->packageShort() ?? '—' }}</td>
+                                <td>
+                                    @if ($lead->pitchPackageShort())
+                                        <strong>{{ $lead->pitchPackageShort() }}</strong>
+                                    @elseif ($lead->package)
+                                        <span class="caption">On hold</span>
+                                    @else
+                                        —
+                                    @endif
+                                </td>
                                 <td><x-pill>{{ $lead->primaryContact?->emailLabel() ?? 'Not found' }}</x-pill></td>
                                 <td>{{ $lead->stageLabel() }}</td>
                             </tr>

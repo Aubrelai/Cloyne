@@ -40,6 +40,34 @@ class LeadsPageTest extends TestCase
             ->assertDontSee('Sunshine Roofing Co.');
     }
 
+    public function test_can_pitch_now_filter_respects_what_laiq_is_selling(): void
+    {
+        config(['cloyne.selling' => ['website']]);
+        $this->seed(LeadSeeder::class);
+
+        // Glow Med Spa fits Scale, already has a good site: nothing to pitch while only Starter is on sale.
+        $this->get('/leads?pitchable=1')
+            ->assertOk()
+            ->assertSee('Sunshine Roofing Co.')
+            ->assertDontSee('Glow Med Spa');
+    }
+
+    public function test_pitch_package_falls_back_only_when_a_smaller_package_also_fits(): void
+    {
+        config(['cloyne.selling' => ['website']]);
+
+        $needsSiteToo = new Business(['package' => 'ads_crm', 'pitch_package' => 'website']);
+        $goodSiteAlready = new Business(['package' => 'ads_crm', 'pitch_package' => null]);
+        $starterFit = new Business(['package' => 'website']);
+
+        $this->assertSame('website', $needsSiteToo->pitchPackage());
+        $this->assertNull($goodSiteAlready->pitchPackage());
+        $this->assertSame('website', $starterFit->pitchPackage());
+
+        config(['cloyne.selling' => ['website', 'ads_crm', 'scale']]);
+        $this->assertSame('ads_crm', $needsSiteToo->pitchPackage());
+    }
+
     public function test_recording_an_audit_updates_the_business_score(): void
     {
         $business = Business::create(['name' => 'Test Roofing', 'category' => 'Roofing']);

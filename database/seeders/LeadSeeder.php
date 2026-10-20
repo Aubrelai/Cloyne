@@ -14,24 +14,24 @@ class LeadSeeder extends Seeder
 {
     public function run(): void
     {
-        // Sample businesses from an earlier version, replaced by the ones below.
-        Business::whereIn('name', ['Lone Star HVAC', 'Coastal Air Pros', 'Ridgeline Painting', 'Peak Electric'])->delete();
+        $names = array_column($this->samples(), 'name');
+
+        // Rebuild the sample rows each time so they pick up changes to this file.
+        // Also clears sample businesses from earlier versions.
+        Business::whereIn('name', [...$names, 'Lone Star HVAC', 'Coastal Air Pros', 'Ridgeline Painting', 'Peak Electric'])->delete();
 
         foreach ($this->samples() as $sample) {
-            $business = Business::updateOrCreate(
-                ['name' => $sample['name'], 'city' => $sample['city']],
-                collect($sample)->except(['contact', 'audit', 'pitch', 'package', 'stage'])->all()
+            $business = Business::create(
+                collect($sample)->except(['contact', 'audit', 'pitch', 'package', 'pitch_package', 'stage'])->all()
             );
 
-            if ($business->wasRecentlyCreated) {
-                if ($sample['contact']) {
-                    $business->contacts()->create($sample['contact']);
-                }
-                if ($sample['audit']) {
-                    $business->recordAudit($sample['audit'], $sample['pitch'] ?? null, $sample['package'] ?? null);
-                }
-                $business->update(['stage' => $sample['stage']]);
+            if ($sample['contact']) {
+                $business->contacts()->create($sample['contact']);
             }
+            if ($sample['audit']) {
+                $business->recordAudit($sample['audit'], $sample['pitch'] ?? null, $sample['package'] ?? null, $sample['pitch_package'] ?? null);
+            }
+            $business->update(['stage' => $sample['stage']]);
         }
     }
 
@@ -56,8 +56,9 @@ class LeadSeeder extends Seeder
                     $this->check('Strong reviews, dated site', '4.8 stars, not mobile-friendly', true, 15),
                     $this->check('License active', 'From state license records', true, 10),
                 ],
-                'pitch' => 'Paying for Meta clicks that land on a page with no way to book.',
+                'pitch' => 'Paying for Meta clicks that land on a site with no way to book.',
                 'package' => 'ads_crm',
+                'pitch_package' => 'website',
             ],
             [
                 'name' => 'Bayside Plumbing', 'category' => 'Plumbing', 'city' => 'Tampa', 'state' => 'FL',
@@ -71,8 +72,9 @@ class LeadSeeder extends Seeder
                     $this->check('License active', 'From state license records', true, 10),
                     $this->check('No video on homepage', 'Useful for the creative pitch', false, 0),
                 ],
-                'pitch' => 'Tried Meta ads before and stopped: ask what went wrong.',
+                'pitch' => 'Great reviews, slow site with no form: start with a new site, then ads.',
                 'package' => 'ads_crm',
+                'pitch_package' => 'website',
             ],
             [
                 'name' => 'Bright Smile Dental', 'category' => 'Dentist', 'city' => 'Houston', 'state' => 'TX',
@@ -87,6 +89,7 @@ class LeadSeeder extends Seeder
                 ],
                 'pitch' => 'Running ads into a broken contact form.',
                 'package' => 'scale',
+                'pitch_package' => 'website',
             ],
             [
                 'name' => 'Iron Peak Fitness', 'category' => 'Gym', 'city' => 'Denver', 'state' => 'CO',
@@ -114,8 +117,9 @@ class LeadSeeder extends Seeder
                     $this->check('Has a booking form', 'Already captures leads', true, 0),
                     $this->check('Strong reviews, weak site', 'Few reviews', false, 0),
                 ],
-                'pitch' => 'Already well set up; better creative is the only angle.',
+                'pitch' => 'Already has a good site and booking: wait for Scale (ads in more areas, SEO, social).',
                 'package' => 'scale',
+                'pitch_package' => null,
             ],
             [
                 'name' => 'Desert Sun Landscaping', 'category' => 'Landscaping', 'city' => 'Phoenix', 'state' => 'AZ',

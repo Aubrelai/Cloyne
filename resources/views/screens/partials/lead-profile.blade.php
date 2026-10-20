@@ -42,13 +42,31 @@
     </div>
 
     @if ($lead->package)
-        @php $pkg = \App\Models\Business::packages()[$lead->package] ?? null; @endphp
-        <div class="panel__section">
-            <div class="label">Best package</div>
-            <div class="split" style="margin-top: 4px"><strong>{{ $lead->packageName() }}</strong><span class="caption">{{ $pkg['price'] ?? '' }}</span></div>
-            @if ($pkg)
-                <div class="caption" style="margin-top: 2px">{{ $pkg['fits'] }}</div>
-            @endif
+        @php
+            $all = \App\Models\Business::packages();
+            $best = $all[$lead->package] ?? null;
+            $pitchKey = $lead->pitchPackage();
+            $pitch = $pitchKey ? ($all[$pitchKey] ?? null) : null;
+        @endphp
+        <div class="panel__section" style="display: flex; flex-direction: column; gap: 10px">
+            <div>
+                <div class="label">Best fit</div>
+                <div class="split" style="margin-top: 4px"><strong>{{ $best['name'] ?? $lead->package }}</strong><span class="caption">{{ $best['price'] ?? '' }}</span></div>
+                @if ($best)
+                    <div class="caption" style="margin-top: 2px">{{ $best['fits'] }}</div>
+                @endif
+            </div>
+            <div>
+                <div class="label">Pitch now</div>
+                @if ($pitch)
+                    <div class="split" style="margin-top: 4px"><strong class="brand-text">{{ $pitch['name'] }}</strong><span class="caption">{{ $pitch['price'] }}</span></div>
+                    @if ($pitchKey !== $lead->package)
+                        <div class="caption" style="margin-top: 2px">{{ $best['short'] ?? 'Their best fit' }} isn’t on sale yet. Start with {{ $pitch['short'] }}, then upgrade.</div>
+                    @endif
+                @else
+                    <div class="caption" style="margin-top: 4px">Nothing to pitch yet. Hold until {{ $best['short'] ?? 'their best fit' }} is on sale.</div>
+                @endif
+            </div>
         </div>
     @endif
 

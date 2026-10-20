@@ -32,7 +32,7 @@ class ScreenController extends Controller
 
     public function leads(Request $request): View
     {
-        $filters = $request->only(['q', 'category', 'package', 'state', 'score', 'email']);
+        $filters = $request->only(['q', 'category', 'package', 'pitchable', 'state', 'score', 'email']);
 
         $leads = Business::query()
             ->with(['primaryContact', 'latestAudit'])
@@ -42,6 +42,9 @@ class ScreenController extends Controller
                 ->orWhereHas('contacts', fn ($c) => $c->where('email', 'like', "%{$term}%"))))
             ->when($filters['category'] ?? null, fn ($q, $category) => $q->where('category', $category))
             ->when($filters['package'] ?? null, fn ($q, $package) => $q->where('package', $package))
+            ->when($filters['pitchable'] ?? null, fn ($q) => $q->where(fn ($w) => $w
+                ->whereIn('package', Business::sellingNow())
+                ->orWhereIn('pitch_package', Business::sellingNow())))
             ->when($filters['state'] ?? null, fn ($q, $state) => $q->where('state', $state))
             ->scoreTier($filters['score'] ?? null)
             ->when($filters['email'] ?? null, fn ($q, $status) => $status === 'none'

@@ -27,6 +27,31 @@
             <div class="btn-row"><button type="button" class="btn btn--secondary">Test connection</button><button type="submit" class="btn btn--primary">Save</button></div>
         </form>
 
+        <section class="card" style="flex: 1 1 100%">
+            <div class="card__head">
+                <h2 class="card__title">LaiQ packages</h2>
+                <span class="caption">Edit in <span class="mono">config/cloyne.php</span> · on sale: <span class="mono">CLOYNE_SELLING</span> in <span class="mono">.env</span></span>
+            </div>
+            <div class="grid-3">
+                @foreach (\App\Models\Business::packages() as $key => $pkg)
+                    <div class="campaign-card">
+                        <div class="split">
+                            <strong>{{ $pkg['name'] }}</strong>
+                            @if (is_null($pkg['order']))
+                                <x-pill tone="neutral">Quote only</x-pill>
+                            @elseif (in_array($key, \App\Models\Business::sellingNow(), true))
+                                <x-pill tone="success">On sale</x-pill>
+                            @else
+                                <x-pill tone="warning">Paused</x-pill>
+                            @endif
+                        </div>
+                        <div class="caption">{{ $pkg['price'] }}</div>
+                        <div style="font-size: 13px">{{ $pkg['fits'] }}</div>
+                    </div>
+                @endforeach
+            </div>
+        </section>
+
         <section class="card" style="flex: 1 1 420px">
             <h2 class="card__title">Scoring rules</h2>
             <div class="caption">Points per finding. Leads scoring 60+ are drafted for outreach.</div>
@@ -42,9 +67,10 @@
             <h2 class="card__title">Fact sheet for the reply agent</h2>
             <div class="caption">The AI only answers questions using what's written here. It never invents prices, results or client names.</div>
             <label for="facts" class="sr-only">Fact sheet</label>
-            <textarea id="facts" name="facts" rows="8" class="textarea">Services: Meta ads, CRM setup with automatic follow-up, websites.
-Website: $500 setup.
-Meta ads + CRM: $750 CRM setup, then $1,500–2,000/month. Ad spend is paid by the client.
+            <textarea id="facts" name="facts" rows="8" class="textarea">Starter (Website): $500 one-time + $39/mo hosting (optional).
+Growth (Meta ads + CRM): $1,500/mo + $750 setup. Ad spend paid directly to Meta, most start at $1,000–2,000/mo.
+Scale (Full system): $2,000/mo + $1,250 setup + $39/mo hosting. Meta + Google ad spend separate.
+Month-to-month, no long-term contract.
 Booking link: [BOOKING LINK]
 Hand off to a person for: discounts, contracts, complaints.</textarea>
         </section>
