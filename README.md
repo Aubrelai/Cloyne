@@ -54,6 +54,16 @@ Open http://127.0.0.1:8000 in your browser. Leave `php artisan serve` running wh
 
 No `npm` step is needed: Cloyne's styles are plain CSS in `public/css/cloyne.css`.
 
+## Run it on a Mac
+
+1. Install Apple's developer tools (includes Git): open **Terminal** and run `xcode-select --install`.
+2. Install PHP and Composer: `/bin/bash -c "$(curl -fsSL https://php.new/install/mac/8.5)"`, then close and reopen Terminal.
+3. Get the code: `cd ~/Desktop && git clone https://github.com/Aubrelai/Cloyne.git && cd Cloyne`
+4. Run `./update.sh`. It installs everything, sets up the database, runs the checks and opens Cloyne.
+5. Add your keys to the new `.env` file (`APIFY_TOKEN=...`, `ANTHROPIC_API_KEY=...`), then run `./update.sh` again.
+
+After that, run `./update.sh` from the Cloyne folder whenever there's an update. Your leads live in `database/database.sqlite` on each computer; they aren't on GitHub.
+
 ## Edit in VS Code with Claude
 
 1. **Get the code:** in VS Code, open the Command Palette (`Ctrl+Shift+P`) → **Git: Clone** → paste this repo's GitHub URL → pick a folder → **Open**. ([Git for Windows](https://git-scm.com/downloads/win) must be installed.)
