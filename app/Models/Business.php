@@ -22,6 +22,12 @@ class Business extends Model
 
     protected $guarded = ['id'];
 
+    /** Defaults for a new business, so they're set before it's first saved. */
+    protected $attributes = [
+        'stage' => 'new',
+        'source' => 'google_maps',
+    ];
+
     protected function casts(): array
     {
         return [
