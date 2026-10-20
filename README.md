@@ -2,7 +2,7 @@
 
 LaiQ Digital's internal lead engine: it finds businesses in any trade and area, audits their websites and ads with AI, scores them, drafts outreach for review, and hands booked calls to the LaiQ Digital CRM.
 
-This repo is the **front end of all eight screens**, built in Laravel (PHP) with Blade views. Every screen runs on sample data for now, so the design is clickable before the database and background jobs exist.
+Built in Laravel (PHP) with Blade views. **The Leads screen runs on the real database** (businesses, contacts, audits), with working filters, search and lead profiles. The other screens still use sample data from `app/Support/SampleData.php` until their features are built.
 
 | Screen | URL | View file |
 | --- | --- | --- |
@@ -40,8 +40,11 @@ copy .env.example .env
 php artisan key:generate
 New-Item database\database.sqlite -ItemType File
 php artisan migrate
+php artisan db:seed
 php artisan serve
 ```
+
+`db:seed` loads 8 sample businesses into the database so the Leads screen has data. Run `php artisan test` any time to check that things still work.
 
 Open http://127.0.0.1:8000 in your browser. Leave `php artisan serve` running while you edit; refresh the page to see changes.
 
@@ -58,7 +61,8 @@ Prefer the terminal? Install Claude Code from PowerShell with `irm https://claud
 
 ## What's next (not built yet)
 
-- Database tables for businesses, licenses, contacts, audits, scores, campaigns, messages and bookings (replace `SampleData` with Eloquent models)
+- ~~Database tables for businesses, contacts and audits~~ ✓ done (`app/Models/Business.php`, `Contact.php`, `Audit.php`)
+- Database tables for campaigns, messages and bookings
 - Background workers: Lead Finder searches (Apify), email verification, AI audits (Claude API), sending (Instantly), reply checking
 - CRM connection: push booked leads to the LaiQ Digital CRM's API; receive deal-stage webhooks
 - Logins and roles (Owner, Reviewer, Viewer)

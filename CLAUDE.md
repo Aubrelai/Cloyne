@@ -2,7 +2,7 @@
 
 Cloyne is LaiQ Digital's internal lead engine (internal only, never client-facing). It finds businesses in any trade and area, audits their websites and ads with AI, scores them 0–100, drafts outreach for human review, sends through Instantly, handles replies, and pushes booked calls to the separate, custom-built LaiQ Digital CRM (PHP + MySQL) via an API.
 
-Current state: front end only. All eight screens are Blade views fed by `app/Support/SampleData.php`. See README.md for the file map.
+Current state: all eight screens are Blade views. The Leads screen reads the real database (`Business`, `Contact`, `Audit` models; save audits with `Business::recordAudit()`, which also updates the cached `score` and `stage`). The other screens still read `app/Support/SampleData.php`. See README.md for the file map. Run `php artisan test` after changes.
 
 Design rules (from the Cloyne design system):
 - Use the CSS variables in `public/css/cloyne.css`; never hard-code hex colors in views.

@@ -16,8 +16,10 @@
     <main class="main">
         <header class="topbar">
             @hasSection('search')
-                <label for="global-search" class="sr-only">Search businesses</label>
-                <input id="global-search" type="search" class="input search" placeholder="Search businesses, phones, emails">
+                <form action="{{ route('leads') }}" method="get" class="search" role="search">
+                    <label for="global-search" class="sr-only">Search businesses</label>
+                    <input id="global-search" name="q" type="search" class="input" style="width: 100%" value="{{ request('q') }}" placeholder="Search businesses, phones, emails">
+                </form>
             @endif
             <div class="topbar__spacer"></div>
             @yield('topbar-actions')

@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Business;
 use App\Support\SampleData as Data;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 /**
@@ -28,9 +30,42 @@ class ScreenController extends Controller
         return view('screens.finder', ['searches' => Data::searches()]);
     }
 
-    public function leads(): View
+    public function leads(Request $request): View
     {
-        return view('screens.leads', ['leads' => Data::leads(), 'audit' => Data::audit()]);
+        $filters = $request->only(['q', 'trade', 'state', 'score', 'email']);
+
+        $leads = Business::query()
+            ->with(['primaryContact', 'latestAudit'])
+            ->when($filters['q'] ?? null, fn ($q, $term) => $q->where(fn ($w) => $w
+                ->where('name', 'like', "%{$term}%")
+                ->orWhere('phone', 'like', "%{$term}%")
+                ->orWhereHas('contacts', fn ($c) => $c->where('email', 'like', "%{$term}%"))))
+            ->when($filters['trade'] ?? null, fn ($q, $trade) => $q->where('trade', $trade))
+            ->when($filters['state'] ?? null, fn ($q, $state) => $q->where('state', $state))
+            ->scoreTier($filters['score'] ?? null)
+            ->when($filters['email'] ?? null, fn ($q, $status) => $status === 'none'
+                ? $q->whereDoesntHave('contacts', fn ($c) => $c->whereNotNull('email'))
+                : $q->whereHas('contacts', fn ($c) => $c->where('email_status', $status)))
+            ->orderByRaw('score is null')   // unscored leads go last
+            ->orderByDesc('score')
+            ->orderBy('name')
+            ->paginate(25)
+            ->withQueryString();
+
+        // The lead shown in the side panel: ?lead=ID, else the top row.
+        $selected = $request->filled('lead')
+            ? Business::with(['primaryContact', 'latestAudit'])->find($request->integer('lead'))
+            : $leads->first();
+
+        return view('screens.leads', [
+            'leads' => $leads,
+            'selected' => $selected,
+            'filters' => $filters,
+            'total' => Business::count(),
+            'hotCount' => Business::where('score', '>=', 60)->count(),
+            'trades' => Business::query()->distinct()->orderBy('trade')->pluck('trade'),
+            'states' => Business::query()->whereNotNull('state')->distinct()->orderBy('state')->pluck('state'),
+        ]);
     }
 
     public function review(): View

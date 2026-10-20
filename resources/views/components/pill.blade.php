@@ -6,7 +6,7 @@
     $tone ??= match ($word) {
         'Verified', 'In CRM', 'Active', 'Healthy', 'Done', 'Connected', 'Interested' => 'success',
         'Risky', 'Warming', 'Not now' => 'warning',
-        'Bounced', 'Sync failed', 'Opt-out', 'Failed', 'Verification failed' => 'danger',
+        'Bounced', 'Invalid', 'Sync failed', 'Opt-out', 'Failed', 'Verification failed' => 'danger',
         'AI drafted', 'AI suggested reply' => 'signal',
         default => 'neutral',
     };

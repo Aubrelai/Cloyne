@@ -67,30 +67,7 @@ class SampleData
         ];
     }
 
-    public static function leads(): array
-    {
-        return [
-            ['name' => 'Sunshine Roofing Co.', 'city' => 'Wellington, FL', 'trade' => 'Roofing', 'score' => 92, 'email' => 'Verified', 'stage' => 'Draft ready'],
-            ['name' => 'Bayside Plumbing', 'city' => 'Tampa, FL', 'trade' => 'Plumbing', 'score' => 78, 'email' => 'Verified', 'stage' => 'Emailed'],
-            ['name' => 'Lone Star HVAC', 'city' => 'Houston, TX', 'trade' => 'HVAC', 'score' => 71, 'email' => 'Verified', 'stage' => 'Audited'],
-            ['name' => 'Peak Electric', 'city' => 'Denver, CO', 'trade' => 'Electrical', 'score' => 66, 'email' => 'Verified', 'stage' => 'Booked'],
-            ['name' => 'Coastal Air Pros', 'city' => 'Miami, FL', 'trade' => 'HVAC', 'score' => 54, 'email' => 'Risky', 'stage' => 'Audited'],
-            ['name' => 'Desert Sun Landscaping', 'city' => 'Phoenix, AZ', 'trade' => 'Landscaping', 'score' => 47, 'email' => 'Verified', 'stage' => 'Audited'],
-            ['name' => 'Ridgeline Painting', 'city' => 'Dallas, TX', 'trade' => 'Painting', 'score' => 31, 'email' => 'Not found', 'stage' => 'Audited'],
-            ['name' => 'Gulf Coast Pools', 'city' => 'Sarasota, FL', 'trade' => 'Pools', 'score' => 24, 'email' => 'Bounced', 'stage' => 'Excluded'],
-        ];
-    }
 
-    public static function audit(): array
-    {
-        return [
-            ['yes' => true, 'title' => 'Active Meta ads', 'detail' => '3 ads running now', 'points' => 25],
-            ['yes' => true, 'title' => 'Meta Pixel installed', 'detail' => 'Already running tracked ads', 'points' => 15],
-            ['yes' => false, 'title' => 'No lead form or booking', 'detail' => 'Paid clicks have no way to book', 'points' => 15],
-            ['yes' => true, 'title' => 'Strong reviews, dated site', 'detail' => '4.8 stars, not mobile-friendly', 'points' => 15],
-            ['yes' => true, 'title' => 'License active', 'detail' => 'From state license records', 'points' => 10],
-        ];
-    }
 
     public static function drafts(): array
     {

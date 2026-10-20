@@ -1,0 +1,151 @@
+<?php
+
+namespace Database\Seeders;
+
+use App\Models\Business;
+use Illuminate\Database\Seeder;
+
+/**
+ * Loads sample businesses so the Leads screen has something to show
+ * before the Lead Finder is connected. Safe to run more than once.
+ * Remove these rows any time with: php artisan migrate:fresh
+ */
+class LeadSeeder extends Seeder
+{
+    public function run(): void
+    {
+        foreach ($this->samples() as $sample) {
+            $business = Business::updateOrCreate(
+                ['name' => $sample['name'], 'city' => $sample['city']],
+                collect($sample)->except(['contact', 'audit', 'pitch', 'stage'])->all()
+            );
+
+            if ($business->wasRecentlyCreated) {
+                if ($sample['contact']) {
+                    $business->contacts()->create($sample['contact']);
+                }
+                if ($sample['audit']) {
+                    $business->recordAudit($sample['audit'], $sample['pitch'] ?? null);
+                }
+                $business->update(['stage' => $sample['stage']]);
+            }
+        }
+    }
+
+    private function check(string $title, string $detail, bool $passed, int $points): array
+    {
+        return compact('title', 'detail', 'passed', 'points');
+    }
+
+    private function samples(): array
+    {
+        return [
+            [
+                'name' => 'Sunshine Roofing Co.', 'trade' => 'Roofing', 'city' => 'Wellington', 'state' => 'FL',
+                'phone' => '(561) 555-0142', 'website' => 'https://example.com/sunshine-roofing',
+                'rating' => 4.8, 'review_count' => 126, 'license_status' => 'Active', 'license_expires_on' => '2027-08-31',
+                'stage' => 'draft_ready',
+                'contact' => ['name' => 'Mike Torres', 'role' => 'Owner', 'email' => 'mike@example.com', 'email_status' => 'verified'],
+                'audit' => [
+                    $this->check('Active Meta ads', '3 ads running now', true, 25),
+                    $this->check('Meta Pixel installed', 'Already running tracked ads', true, 15),
+                    $this->check('No lead form or booking', 'Paid clicks have no way to book', false, 15),
+                    $this->check('Strong reviews, dated site', '4.8 stars, not mobile-friendly', true, 15),
+                    $this->check('License active', 'From state license records', true, 10),
+                ],
+                'pitch' => 'Paying for Meta clicks that land on a page with no way to book.',
+            ],
+            [
+                'name' => 'Bayside Plumbing', 'trade' => 'Plumbing', 'city' => 'Tampa', 'state' => 'FL',
+                'phone' => '(813) 555-0187', 'rating' => 4.9, 'review_count' => 212, 'stage' => 'emailed',
+                'contact' => ['name' => 'Dana Reyes', 'role' => 'Owner', 'email' => 'dana@example.com', 'email_status' => 'verified'],
+                'audit' => [
+                    $this->check('Meta Pixel installed', 'Tracking set up, no active ads', true, 15),
+                    $this->check('No lead form or booking', 'Phone number only', false, 15),
+                    $this->check('Strong reviews, dated site', '4.9 stars, slow site', true, 15),
+                    $this->check('Google Ads tag present', 'Has a marketing budget', true, 5),
+                    $this->check('License active', 'From state license records', true, 10),
+                    $this->check('No video on homepage', 'Useful for the creative pitch', false, 0),
+                ],
+                'pitch' => 'Tried Meta ads before and stopped: ask what went wrong.',
+            ],
+            [
+                'name' => 'Lone Star HVAC', 'trade' => 'HVAC', 'city' => 'Houston', 'state' => 'TX',
+                'phone' => '(713) 555-0110', 'rating' => 4.6, 'review_count' => 88, 'stage' => 'audited',
+                'contact' => ['name' => 'Chris Nguyen', 'role' => 'Manager', 'email' => 'chris@example.com', 'email_status' => 'verified'],
+                'audit' => [
+                    $this->check('Active Meta ads', '1 ad running now', true, 25),
+                    $this->check('Meta Pixel installed', 'Already running tracked ads', true, 15),
+                    $this->check('No lead form or booking', 'Contact form is broken', false, 15),
+                    $this->check('Google Ads tag present', 'Has a marketing budget', true, 5),
+                    $this->check('Strong reviews, weak site', 'Site looks fine', false, 0),
+                ],
+                'pitch' => 'Running ads into a broken contact form.',
+            ],
+            [
+                'name' => 'Peak Electric', 'trade' => 'Electrical', 'city' => 'Denver', 'state' => 'CO',
+                'phone' => '(303) 555-0164', 'rating' => 4.7, 'review_count' => 54, 'stage' => 'booked',
+                'contact' => ['name' => 'Jordan Blake', 'role' => 'Owner', 'email' => 'jordan@example.com', 'email_status' => 'verified'],
+                'audit' => [
+                    $this->check('Meta Pixel installed', 'Tracking set up, no active ads', true, 15),
+                    $this->check('No lead form or booking', 'Phone number only', false, 15),
+                    $this->check('Strong reviews, dated site', '4.7 stars, not mobile-friendly', true, 15),
+                    $this->check('Active license, recently issued', 'Licensed 2 years ago', true, 10),
+                    $this->check('Google Ads tag present', 'Has a marketing budget', true, 5),
+                    $this->check('Active Meta ads', 'None running', false, 0),
+                ],
+                'pitch' => 'Good reviews, but the site gives visitors no way to book.',
+            ],
+            [
+                'name' => 'Coastal Air Pros', 'trade' => 'HVAC', 'city' => 'Miami', 'state' => 'FL',
+                'rating' => 4.4, 'review_count' => 39, 'stage' => 'audited',
+                'contact' => ['name' => null, 'role' => null, 'email' => 'info@example.com', 'email_status' => 'risky'],
+                'audit' => [
+                    $this->check('Active Meta ads', '2 ads running now', true, 25),
+                    $this->check('Meta Pixel installed', 'Already running tracked ads', true, 15),
+                    $this->check('Google Ads tag present', 'Has a marketing budget', true, 5),
+                    $this->check('Has a booking form', 'Already captures leads', true, 0),
+                    $this->check('Strong reviews, weak site', 'Few reviews', false, 0),
+                ],
+                'pitch' => 'Already well set up; better creative is the only angle.',
+            ],
+            [
+                'name' => 'Desert Sun Landscaping', 'trade' => 'Landscaping', 'city' => 'Phoenix', 'state' => 'AZ',
+                'rating' => 4.5, 'review_count' => 61, 'stage' => 'audited',
+                'contact' => ['name' => null, 'role' => null, 'email' => 'hello@example.com', 'email_status' => 'verified'],
+                'audit' => [
+                    $this->check('No lead form or booking', 'Phone number only', false, 15),
+                    $this->check('Strong reviews, dated site', '4.5 stars, dated site', true, 15),
+                    $this->check('Google Ads tag present', 'Has a marketing budget', true, 5),
+                    $this->check('Active Meta ads', 'None running', false, 0),
+                    $this->check('Meta Pixel installed', 'Not found', false, 0),
+                ],
+                'pitch' => 'Strong reviews but no online way to book.',
+            ],
+            [
+                'name' => 'Ridgeline Painting', 'trade' => 'Painting', 'city' => 'Dallas', 'state' => 'TX',
+                'rating' => 3.9, 'review_count' => 12, 'stage' => 'audited',
+                'contact' => null,
+                'audit' => [
+                    $this->check('No lead form or booking', 'Phone number only', false, 15),
+                    $this->check('No website at all', 'Google listing only', false, 10),
+                    $this->check('Strong reviews, weak site', 'Only 12 reviews', false, 0),
+                ],
+                'pitch' => 'No website: offer the $500 site as a first step.',
+            ],
+            [
+                'name' => 'Gulf Coast Pools', 'trade' => 'Pools', 'city' => 'Sarasota', 'state' => 'FL',
+                'rating' => 4.1, 'review_count' => 20, 'stage' => 'excluded',
+                'contact' => ['name' => null, 'role' => null, 'email' => 'office@example.com', 'email_status' => 'bounced'],
+                'audit' => [
+                    $this->check('Has a booking form', 'Already captures leads', true, 0),
+                    $this->check('Google Ads tag present', 'Has a marketing budget', true, 5),
+                    $this->check('Active license', 'From state license records', true, 10),
+                    $this->check('Meta Pixel installed', 'Not found', false, 0),
+                    $this->check('Email bounced', 'Excluded from outreach', false, 0),
+                ],
+                'pitch' => null,
+            ],
+        ];
+    }
+}
