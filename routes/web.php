@@ -24,3 +24,4 @@ Route::post('/leads/audit', [AuditController::class, 'many'])->name('audits.many
 Route::delete('/leads/{business}', [LeadController::class, 'destroy'])->name('leads.destroy');
 Route::post('/leads/delete', [LeadController::class, 'destroyMany'])->name('leads.destroy-many');
 Route::post('/leads/delete-matching', [LeadController::class, 'destroyMatching'])->name('leads.destroy-matching');
+Route::delete('/lead-finder/searches/{search}', [SearchController::class, 'destroy'])->name('searches.destroy');

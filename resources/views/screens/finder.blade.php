@@ -104,9 +104,18 @@
                                 @endif
                             </td>
                             <td>
-                                @if ($search->status === 'done' && $search->added)
-                                    <a href="{{ route('leads', ['search' => $search->id]) }}" style="font-weight: 600">View leads</a>
-                                @endif
+                                <div class="btn-row" style="justify-content: flex-end; align-items: center">
+                                    @if ($search->status === 'done' && $search->added)
+                                        <a href="{{ route('leads', ['search' => $search->id]) }}" style="font-weight: 600">View leads</a>
+                                    @endif
+                                    @php $leadCount = $search->businesses_count; @endphp
+                                    <form method="post" action="{{ route('searches.destroy', $search) }}"
+                                          onsubmit="return confirm('Delete the search {{ addslashes($search->label()) }}{{ $leadCount ? ' and its ' . $leadCount . ' ' . Str::plural('lead', $leadCount) : '' }}? This can’t be undone.')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn--ghost btn--sm">Delete</button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     @endforeach

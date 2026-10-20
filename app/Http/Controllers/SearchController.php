@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Search;
 use App\Services\Apify;
 use App\Services\LeadImporter;
+use App\Services\LeadRemover;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Throwable;
@@ -42,6 +43,16 @@ class SearchController extends Controller
 
         return redirect()->route('finder')
             ->with('status', "Searching Google Maps for {$data['category']} in {$data['area']}. This usually takes 1–5 minutes.");
+    }
+
+    /** Delete a search and every lead it found. */
+    public function destroy(Search $search, LeadRemover $remover): RedirectResponse
+    {
+        $label = $search->label();
+        $count = $remover->removeSearch($search);
+
+        return redirect()->route('finder')
+            ->with('status', "Deleted the search {$label} and its {$count} " . str('lead')->plural($count) . '.');
     }
 
     /** "Check now" button: sync every running search. */

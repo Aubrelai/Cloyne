@@ -64,7 +64,7 @@ class ScreenController extends Controller
         }
 
         return view('screens.finder', [
-            'searches' => Search::latest()->limit(50)->get(),
+            'searches' => Search::withCount('businesses')->latest()->limit(50)->get(),
             'configured' => Apify::isConfigured(),
             'maxOptions' => SearchController::MAX_RESULT_OPTIONS,
         ]);

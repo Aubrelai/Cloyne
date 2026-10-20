@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Business;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use App\Services\LeadRemover;
 
 /** Deleting leads. Deleted Google places are remembered so searches don't re-add them. */
 class LeadController extends Controller
@@ -13,7 +13,7 @@ class LeadController extends Controller
     public function destroy(Business $business): RedirectResponse
     {
         $name = $business->name;
-        $this->delete(collect([$business]));
+        app(LeadRemover::class)->remove([$business]);
 
         return redirect()->route('leads')->with('status', "Deleted {$name}.");
     }
@@ -25,10 +25,7 @@ class LeadController extends Controller
             'ids.*' => ['integer'],
         ], ['ids.required' => 'Tick at least one lead to delete.'])['ids'];
 
-        $businesses = Business::whereIn('id', $ids)->get();
-        $this->delete($businesses);
-
-        $count = $businesses->count();
+        $count = app(LeadRemover::class)->remove(Business::whereIn('id', $ids)->get());
 
         return back()->with('status', "Deleted {$count} " . str('lead')->plural($count) . '.');
     }
@@ -43,26 +40,9 @@ class LeadController extends Controller
 
         $count = 0;
         Business::filtered($filters)->chunkById(200, function ($businesses) use (&$count) {
-            $this->delete($businesses);
-            $count += $businesses->count();
+            $count += app(LeadRemover::class)->remove($businesses);
         });
 
         return redirect()->route('leads')->with('status', "Deleted {$count} " . str('lead')->plural($count) . '.');
-    }
-
-    /** @param  \Illuminate\Support\Collection<int, Business>  $businesses */
-    private function delete($businesses): void
-    {
-        DB::transaction(function () use ($businesses) {
-            foreach ($businesses as $business) {
-                if ($business->place_id) {
-                    DB::table('dismissed_places')->updateOrInsert(
-                        ['place_id' => $business->place_id],
-                        ['name' => $business->name, 'updated_at' => now(), 'created_at' => now()],
-                    );
-                }
-                $business->delete(); // contacts and audits are removed with it
-            }
-        });
     }
 }

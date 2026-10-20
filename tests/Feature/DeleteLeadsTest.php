@@ -59,6 +59,31 @@ class DeleteLeadsTest extends TestCase
         $this->assertSame(1, Business::count());
     }
 
+    public function test_deleting_a_search_removes_it_and_its_leads(): void
+    {
+        $search = Search::create(['category' => 'Dentists', 'area' => 'Palm Beach', 'max_results' => 100, 'status' => 'done', 'added' => 2]);
+        Business::create(['name' => 'D1', 'category' => 'Dentists', 'search_id' => $search->id, 'place_id' => 'p1']);
+        Business::create(['name' => 'D2', 'category' => 'Dentists', 'search_id' => $search->id]);
+        Business::create(['name' => 'Other', 'category' => 'Gyms']);
+
+        $this->delete("/lead-finder/searches/{$search->id}")->assertRedirect('/lead-finder');
+
+        $this->assertDatabaseMissing('searches', ['id' => $search->id]);
+        $this->assertSame(['Other'], Business::pluck('name')->all());
+        $this->assertDatabaseHas('dismissed_places', ['place_id' => 'p1']);
+    }
+
+    public function test_a_search_disappears_once_all_its_leads_are_deleted(): void
+    {
+        $search = Search::create(['category' => 'Dentists', 'area' => 'Palm Beach', 'max_results' => 100, 'status' => 'done', 'added' => 1]);
+        $lead = Business::create(['name' => 'D1', 'category' => 'Dentists', 'search_id' => $search->id]);
+
+        $this->post('/leads/delete-matching', ['category' => 'Dentists']);
+
+        $this->assertDatabaseMissing('businesses', ['id' => $lead->id]);
+        $this->assertDatabaseMissing('searches', ['id' => $search->id]);
+    }
+
     public function test_deleting_nothing_shows_an_error(): void
     {
         $this->post('/leads/delete', [])->assertSessionHasErrors('ids');
