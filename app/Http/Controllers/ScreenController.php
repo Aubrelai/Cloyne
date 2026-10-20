@@ -6,25 +6,50 @@ use App\Models\Business;
 use App\Models\Search;
 use App\Services\Apify;
 use App\Services\LeadImporter;
-use App\Support\SampleData as Data;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 /**
- * One method per Cloyne screen. Each passes sample data for now;
- * swap Data:: calls for real queries as each feature is built.
+ * One method per Cloyne screen. Screens whose feature isn't built yet
+ * show an empty state that says which step builds them.
  */
 class ScreenController extends Controller
 {
     public function dashboard(): View
     {
+        $total = Business::count();
+
+        // US map: place leads with coordinates on a simple lat/lng box (max 1,500 dots).
+        $dots = Business::query()
+            ->whereNotNull('latitude')->whereNotNull('longitude')
+            ->whereBetween('latitude', [24, 50])->whereBetween('longitude', [-125, -66])
+            ->latest()->limit(1500)
+            ->get(['latitude', 'longitude', 'score'])
+            ->map(fn ($b) => [
+                'x' => round(((float) $b->longitude + 125) / 59 * 100, 2),
+                'y' => round((50 - (float) $b->latitude) / 26 * 100, 2),
+                'hot' => $b->score >= 60,
+            ]);
+
         return view('screens.dashboard', [
-            'stats' => Data::stats(),
-            'metros' => Data::metros(),
-            'dots' => Data::mapDots(),
-            'labels' => Data::mapLabels(),
+            'total' => $total,
+            'withEmail' => Business::whereHas('contacts', fn ($c) => $c->whereNotNull('email'))->count(),
+            'audited' => Business::whereNotNull('score')->count(),
+            'hot' => Business::where('score', '>=', 60)->count(),
+            'booked' => Business::where('stage', 'booked')->count(),
+            'newThisWeek' => Business::where('created_at', '>=', now()->subWeek())->count(),
+            'notAudited' => Business::whereNull('score')->where('stage', '!=', 'excluded')->count(),
+            'dots' => $dots,
+            'cities' => Business::query()
+                ->whereNotNull('city')
+                ->selectRaw("city, state, count(*) as total")
+                ->groupBy('city', 'state')
+                ->orderByDesc('total')
+                ->limit(6)
+                ->get(),
             'searches' => Search::where('status', 'running')->latest()->get(),
-            'bookings' => array_slice(Data::bookings(), 0, 3),
+            'recentSearches' => Search::where('status', 'done')->latest('finished_at')->limit(3)->get(),
+            'apifyConnected' => Apify::isConfigured(),
         ]);
     }
 
@@ -89,30 +114,31 @@ class ScreenController extends Controller
 
     public function review(): View
     {
-        return view('screens.review', ['drafts' => Data::drafts()]);
+        return view('screens.review');
     }
 
     public function campaigns(): View
     {
-        return view('screens.campaigns', [
-            'campaigns' => Data::campaigns(),
-            'steps' => Data::steps(),
-            'inboxes' => Data::inboxes(),
-        ]);
+        return view('screens.campaigns');
     }
 
     public function inbox(): View
     {
-        return view('screens.inbox', ['replies' => Data::replies(), 'filters' => Data::replyFilters()]);
+        return view('screens.inbox');
     }
 
     public function booked(): View
     {
-        return view('screens.booked', ['bookings' => Data::bookings(), 'funnel' => Data::funnel()]);
+        return view('screens.booked', [
+            'bookings' => Business::where('stage', 'booked')->with('primaryContact')->latest('updated_at')->get(),
+        ]);
     }
 
     public function settings(): View
     {
-        return view('screens.settings', ['inboxes' => Data::inboxes(), 'scoring' => Data::scoring()]);
+        return view('screens.settings', [
+            'apifyConnected' => Apify::isConfigured(),
+            'searchCount' => Search::count(),
+        ]);
     }
 }

@@ -22,6 +22,6 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
-        $this->call(LeadSeeder::class);
+        // Sample leads are for tests only: php artisan db:seed --class=LeadSeeder
     }
 }

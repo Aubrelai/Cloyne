@@ -1,12 +1,11 @@
 @php
-    $counts = \App\Support\SampleData::counts();
     $items = [
         ['route' => 'dashboard', 'label' => 'Dashboard', 'icon' => 'dashboard'],
         ['route' => 'finder', 'label' => 'Lead Finder', 'icon' => 'search'],
         ['route' => 'leads', 'label' => 'Leads', 'icon' => 'list'],
-        ['route' => 'review', 'label' => 'Review queue', 'icon' => 'review', 'count' => $counts['review']],
+        ['route' => 'review', 'label' => 'Review queue', 'icon' => 'review'],
         ['route' => 'campaigns', 'label' => 'Campaigns', 'icon' => 'send'],
-        ['route' => 'inbox', 'label' => 'Inbox', 'icon' => 'inbox', 'count' => $counts['inbox']],
+        ['route' => 'inbox', 'label' => 'Inbox', 'icon' => 'inbox'],
         ['route' => 'booked', 'label' => 'Booked', 'icon' => 'calendar'],
     ];
 @endphp

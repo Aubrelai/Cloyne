@@ -2,7 +2,7 @@
 
 LaiQ Digital's internal lead engine: it finds any kind of business in any area, audits their websites and ads with AI, scores them, recommends the best-fit LaiQ package, drafts outreach for review, and hands booked calls to the LaiQ Digital CRM.
 
-Built in Laravel (PHP) with Blade views. **The Leads screen runs on the real database** (businesses, contacts, audits), with working filters, search and lead profiles. The other screens still use sample data from `app/Support/SampleData.php` until their features are built.
+Built in Laravel (PHP) with Blade views. Everything shows real data: the Lead Finder pulls businesses from Google Maps (via Apify), and the Dashboard, Leads and Booked screens read the database. Screens for features not built yet (Review queue, Campaigns, Inbox) say which step builds them.
 
 | Screen | URL | View file |
 | --- | --- | --- |
@@ -20,7 +20,7 @@ Built in Laravel (PHP) with Blade views. **The Leads screen runs on the real dat
 - **Colors, fonts, spacing:** `public/css/cloyne.css`. Every color is a variable at the top of the file (dark theme first, then light). Change a value there and the whole app updates.
 - **Shared layout:** `resources/views/layouts/app.blade.php` (page shell + top bar) and `resources/views/partials/sidebar.blade.php` (left menu).
 - **Reusable pieces:** `resources/views/components/`: `<x-stat>`, `<x-score>`, `<x-pill>`, `<x-icon>`.
-- **Sample data:** `app/Support/SampleData.php`. Each screen's numbers and rows come from here.
+- **Sample leads for tests:** `database/seeders/LeadSeeder.php` (not loaded into your real database).
 - **Which data each screen gets:** `app/Http/Controllers/ScreenController.php`.
 - **URLs:** `routes/web.php`.
 - **LaiQ packages** (names, prices, who each one fits): `config/cloyne.php`.
@@ -41,13 +41,12 @@ copy .env.example .env
 php artisan key:generate
 New-Item database\database.sqlite -ItemType File
 php artisan migrate
-php artisan db:seed
 php artisan serve
 ```
 
 **Lead Finder setup:** add your Apify token to `.env` as `APIFY_TOKEN=...` (get it in Apify Console → Settings → API & Integrations), then restart Cloyne.
 
-`db:seed` loads 8 sample businesses into the database so the Leads screen has data. Run `php artisan test` any time to check that things still work.
+Run `php artisan test` any time to check that things still work.
 
 Open http://127.0.0.1:8000 in your browser. Leave `php artisan serve` running while you edit; refresh the page to see changes.
 

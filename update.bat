@@ -20,8 +20,6 @@ if not exist .env copy .env.example .env >nul && php artisan key:generate
 if not exist database\database.sqlite type nul > database\database.sqlite
 php artisan migrate --force
 if errorlevel 1 goto failed
-php artisan db:seed --force
-if errorlevel 1 goto failed
 
 echo.
 echo === 4/5  Running checks ===

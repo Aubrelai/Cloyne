@@ -88,7 +88,7 @@
                 <p class="muted" style="margin: 0">Try clearing some filters.</p>
                 <a href="{{ route('leads') }}" class="btn btn--secondary">Clear filters</a>
             @else
-                <p class="muted" style="margin: 0">No businesses yet. Start a search, or load the sample leads by running <span class="mono">php artisan db:seed</span>.</p>
+                <p class="muted" style="margin: 0">No businesses yet. Run a search in the Lead Finder and they'll show up here.</p>
                 <a href="{{ route('finder') }}" class="btn btn--primary">Start a search</a>
             @endif
         </section>

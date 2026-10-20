@@ -2,23 +2,28 @@
 
 @section('title', 'Dashboard')
 @section('search', true)
-@section('topbar-actions')
-    <button type="button" class="btn btn--secondary">Last 7 days</button>
-@endsection
 
 @section('content')
     <div class="page-head">
         <div>
             <h1 class="page-title">Dashboard</h1>
-            <div class="page-sub">You have 12 drafts to review and 3 new replies.</div>
+            <div class="page-sub">
+                @if ($total === 0)
+                    No leads yet. Run a search in the Lead Finder to get started.
+                @else
+                    {{ number_format($newThisWeek) }} new {{ Str::plural('lead', $newThisWeek) }} this week.
+                @endif
+            </div>
         </div>
         <a href="{{ route('finder') }}" class="btn btn--primary">Start a search</a>
     </div>
 
     <div class="stats">
-        @foreach ($stats as $s)
-            <x-stat :label="$s['label']" :value="$s['value']" :delta="$s['delta']" :trend="$s['trend']" :tone="! empty($s['brand']) ? 'brand' : null" />
-        @endforeach
+        <x-stat label="Leads" :value="number_format($total)" />
+        <x-stat label="With email" :value="number_format($withEmail)" />
+        <x-stat label="Audited" :value="number_format($audited)" />
+        <x-stat label="Hot (60+)" :value="number_format($hot)" />
+        <x-stat label="Booked" :value="number_format($booked)" tone="brand" />
     </div>
 
     <div class="row">
@@ -30,57 +35,64 @@
                     <span><i class="dot" style="background: var(--signal)"></i>Other leads</span>
                 </div>
             </div>
-            <div class="map" role="img" aria-label="Map of leads by metro area">
-                @foreach ($dots as [$x, $y, $hot])
-                    <span @class(['map__dot', 'map__dot--hot' => $hot]) style="left: {{ $x }}%; top: {{ $y }}%"></span>
+            <div class="map" role="img" aria-label="Map of {{ $dots->count() }} leads across the US">
+                @foreach ($dots as $d)
+                    <span @class(['map__dot', 'map__dot--hot' => $d['hot']]) style="left: {{ $d['x'] }}%; top: {{ $d['y'] }}%"></span>
                 @endforeach
-                @foreach ($labels as [$name, $x, $y])
-                    <span class="map__label" style="left: {{ $x }}%; top: {{ $y }}%">{{ $name }}</span>
-                @endforeach
+                @if ($dots->isEmpty())
+                    <span class="map__label" style="left: 50%; top: 50%; transform: translate(-50%, -50%)">Leads appear here after your first search.</span>
+                @endif
             </div>
         </section>
 
         <section class="card grow-1">
-            <h2 class="card__title">Lead density by metro</h2>
-            @php $max = max(array_column($metros, 'count')); @endphp
-            @foreach ($metros as $m)
+            <h2 class="card__title">Leads by city</h2>
+            @forelse ($cities as $c)
                 <div>
-                    <div class="split"><span>{{ $m['name'] }}</span><span class="mono">{{ number_format($m['count']) }}</span></div>
-                    <div class="bar" style="margin-top: 4px"><div class="bar__fill" style="width: {{ round($m['count'] / $max * 100) }}%"></div></div>
+                    <div class="split"><span>{{ $c->city }}{{ $c->state ? ', ' . $c->state : '' }}</span><span class="mono">{{ number_format($c->total) }}</span></div>
+                    <div class="bar" style="margin-top: 4px"><div class="bar__fill" style="width: {{ round($c->total / $cities->first()->total * 100) }}%"></div></div>
                 </div>
-            @endforeach
+            @empty
+                <div class="caption">No leads yet.</div>
+            @endforelse
         </section>
     </div>
 
     <div class="row">
         <section class="card grow-1">
             <h2 class="card__title">Needs your attention</h2>
-            <a href="{{ route('review') }}" class="list-link"><span><strong>12 drafts</strong> waiting for approval</span><span class="brand-text"><strong>Review</strong></span></a>
-            <a href="{{ route('inbox') }}" class="list-link"><span><strong>3 replies</strong> the AI sorted as interested</span><span class="brand-text"><strong>Open inbox</strong></span></a>
-            <a href="{{ route('booked') }}" class="list-link"><span><x-pill>Sync failed</x-pill> 1 lead didn’t reach the CRM</span><span class="brand-text"><strong>Retry</strong></span></a>
+            @if (! $apifyConnected)
+                <a href="{{ route('finder') }}" class="list-link"><span><x-pill tone="warning">Setup</x-pill> Connect Apify to start finding leads</span><span class="brand-text"><strong>Set up</strong></span></a>
+            @endif
+            @if ($notAudited > 0)
+                <a href="{{ route('leads') }}" class="list-link"><span><strong>{{ number_format($notAudited) }} {{ Str::plural('lead', $notAudited) }}</strong> waiting for the AI audit (coming in Step 3)</span><span class="brand-text"><strong>View</strong></span></a>
+            @endif
+            @if ($hot > 0)
+                <a href="{{ route('leads', ['score' => 'hot']) }}" class="list-link"><span><strong>{{ number_format($hot) }} hot {{ Str::plural('lead', $hot) }}</strong> ready to contact</span><span class="brand-text"><strong>View</strong></span></a>
+            @endif
+            @if ($apifyConnected && $notAudited === 0 && $hot === 0)
+                <div class="caption">Nothing right now.</div>
+            @endif
         </section>
 
         <section class="card grow-1">
-            <h2 class="card__title">Running searches</h2>
-            @forelse ($searches as $s)
+            <h2 class="card__title">Searches</h2>
+            @foreach ($searches as $s)
                 <div class="split">
                     <div><strong>{{ $s->label() }}</strong><div class="caption">Started {{ $s->created_at->diffForHumans() }}</div></div>
                     <x-pill tone="signal">Searching</x-pill>
                 </div>
-            @empty
-                <div class="caption">No searches running.</div>
-                <a href="{{ route('finder') }}" class="btn btn--secondary btn--sm" style="align-self: flex-start">Start a search</a>
-            @endforelse
-        </section>
-
-        <section class="card grow-1">
-            <h2 class="card__title">Booked this week</h2>
-            @foreach ($bookings as $b)
+            @endforeach
+            @foreach ($recentSearches as $s)
                 <div class="split">
-                    <div><strong>{{ $b['business'] }}</strong><div class="caption">{{ $b['when'] }}</div></div>
-                    <x-pill>{{ $b['synced'] ? 'In CRM' : 'Sync failed' }}</x-pill>
+                    <div><strong>{{ $s->label() }}</strong><div class="caption">{{ number_format($s->added) }} new {{ Str::plural('lead', $s->added) }} · {{ $s->finished_at?->diffForHumans() }}</div></div>
+                    <x-pill tone="success">Done</x-pill>
                 </div>
             @endforeach
+            @if ($searches->isEmpty() && $recentSearches->isEmpty())
+                <div class="caption">No searches yet.</div>
+                <a href="{{ route('finder') }}" class="btn btn--secondary btn--sm" style="align-self: flex-start">Start a search</a>
+            @endif
         </section>
     </div>
 @endsection
