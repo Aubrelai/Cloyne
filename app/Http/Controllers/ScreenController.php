@@ -72,25 +72,11 @@ class ScreenController extends Controller
 
     public function leads(Request $request): View
     {
-        $filters = $request->only(['q', 'search', 'category', 'package', 'pitchable', 'state', 'score', 'email']);
+        $filters = $request->only(Business::FILTERS);
 
         $leads = Business::query()
             ->with(['primaryContact', 'latestAudit'])
-            ->when($filters['q'] ?? null, fn ($q, $term) => $q->where(fn ($w) => $w
-                ->where('name', 'like', "%{$term}%")
-                ->orWhere('phone', 'like', "%{$term}%")
-                ->orWhereHas('contacts', fn ($c) => $c->where('email', 'like', "%{$term}%"))))
-            ->when($filters['search'] ?? null, fn ($q, $search) => $q->where('search_id', $search))
-            ->when($filters['category'] ?? null, fn ($q, $category) => $q->where('category', $category))
-            ->when($filters['package'] ?? null, fn ($q, $package) => $q->where('package', $package))
-            ->when($filters['pitchable'] ?? null, fn ($q) => $q->where(fn ($w) => $w
-                ->whereIn('package', Business::sellingNow())
-                ->orWhereIn('pitch_package', Business::sellingNow())))
-            ->when($filters['state'] ?? null, fn ($q, $state) => $q->where('state', $state))
-            ->scoreTier($filters['score'] ?? null)
-            ->when($filters['email'] ?? null, fn ($q, $status) => $status === 'none'
-                ? $q->whereDoesntHave('contacts', fn ($c) => $c->whereNotNull('email'))
-                : $q->whereHas('contacts', fn ($c) => $c->where('email_status', $status)))
+            ->filtered($filters)
             ->orderByRaw('score is null')   // unscored leads go last
             ->orderByDesc('score')
             ->orderBy('name')
@@ -111,6 +97,7 @@ class ScreenController extends Controller
             'categories' => Business::query()->distinct()->orderBy('category')->pluck('category'),
             'packages' => Business::packages(),
             'states' => Business::query()->whereNotNull('state')->distinct()->orderBy('state')->pluck('state'),
+            'matching' => array_filter($filters) ? Business::filtered($filters)->count() : 0,
             'fromSearch' => ! empty($filters['search']) ? Search::find($filters['search']) : null,
             'claudeConnected' => Claude::isConfigured(),
             'unaudited' => Business::whereNull('score')->where('stage', '!=', 'excluded')

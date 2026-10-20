@@ -33,6 +33,23 @@ class LeadController extends Controller
         return back()->with('status', "Deleted {$count} " . str('lead')->plural($count) . '.');
     }
 
+    /** Delete every lead matching the current filters (only when at least one filter is set). */
+    public function destroyMatching(Request $request): RedirectResponse
+    {
+        $filters = array_filter($request->only(Business::FILTERS));
+        if (! $filters) {
+            return back()->withErrors(['ids' => 'Set a filter first. Cloyne won’t delete every lead at once.']);
+        }
+
+        $count = 0;
+        Business::filtered($filters)->chunkById(200, function ($businesses) use (&$count) {
+            $this->delete($businesses);
+            $count += $businesses->count();
+        });
+
+        return redirect()->route('leads')->with('status', "Deleted {$count} " . str('lead')->plural($count) . '.');
+    }
+
     /** @param  \Illuminate\Support\Collection<int, Business>  $businesses */
     private function delete($businesses): void
     {

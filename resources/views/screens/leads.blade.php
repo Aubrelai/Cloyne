@@ -113,7 +113,19 @@
             <div class="card card--flush grow-main">
                 <div class="split" style="padding: 8px 12px; border-bottom: 1px solid var(--border)">
                     <span class="caption" id="selected-count">Tick leads to delete them</span>
-                    <button type="submit" form="bulk-delete" class="btn btn--ghost btn--sm" id="delete-selected" disabled>Delete selected</button>
+                    <div class="btn-row">
+                        <button type="submit" form="bulk-delete" class="btn btn--ghost btn--sm" id="delete-selected" disabled>Delete selected</button>
+                        @if ($matching > 0)
+                            <form method="post" action="{{ route('leads.destroy-matching') }}"
+                                  onsubmit="return confirm('Delete all {{ number_format($matching) }} {{ Str::plural('lead', $matching) }} matching these filters? This can’t be undone, and they won’t come back in future searches.')">
+                                @csrf
+                                @foreach (array_filter($filters) as $key => $value)
+                                    <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                                @endforeach
+                                <button type="submit" class="btn btn--secondary btn--sm">Delete all {{ number_format($matching) }} matching</button>
+                            </form>
+                        @endif
+                    </div>
                 </div>
                 <div class="table-wrap">
                     <table class="table">

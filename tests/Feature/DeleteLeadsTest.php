@@ -37,6 +37,28 @@ class DeleteLeadsTest extends TestCase
         $this->assertSame(['Keep'], Business::pluck('name')->all());
     }
 
+    public function test_delete_all_matching_a_filter(): void
+    {
+        foreach (range(1, 30) as $i) {
+            Business::create(['name' => "Dental {$i}", 'category' => 'Dentists']);
+        }
+        Business::create(['name' => 'Keep Gym', 'category' => 'Gyms']);
+
+        $this->get('/leads?category=Dentists')->assertSee('Delete all 30 matching');
+        $this->post('/leads/delete-matching', ['category' => 'Dentists'])->assertRedirect('/leads');
+
+        $this->assertSame(['Keep Gym'], Business::pluck('name')->all());
+    }
+
+    public function test_delete_all_matching_refuses_without_a_filter(): void
+    {
+        Business::create(['name' => 'Keep', 'category' => 'Gyms']);
+
+        $this->post('/leads/delete-matching', [])->assertSessionHasErrors('ids');
+
+        $this->assertSame(1, Business::count());
+    }
+
     public function test_deleting_nothing_shows_an_error(): void
     {
         $this->post('/leads/delete', [])->assertSessionHasErrors('ids');

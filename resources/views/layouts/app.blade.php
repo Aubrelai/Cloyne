@@ -32,6 +32,9 @@
         @error('audit')
             <div role="alert"><x-pill tone="danger">Audit failed</x-pill> {{ $message }}</div>
         @enderror
+        @error('ids')
+            <div role="alert"><x-pill tone="danger">Not deleted</x-pill> {{ $message }}</div>
+        @enderror
 
         @yield('content')
     </main>

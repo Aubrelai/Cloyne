@@ -156,6 +156,30 @@ class Business extends Model
         return collect([$this->city, $this->state])->filter()->implode(', ');
     }
 
+    /** Query-string filters the Leads page understands. */
+    public const FILTERS = ['q', 'search', 'category', 'package', 'pitchable', 'state', 'score', 'email'];
+
+    /** Apply the Leads page filters (used for the list and for "delete all matching"). */
+    public function scopeFiltered(Builder $query, array $filters): void
+    {
+        $query
+            ->when($filters['q'] ?? null, fn ($q, $term) => $q->where(fn ($w) => $w
+                ->where('name', 'like', "%{$term}%")
+                ->orWhere('phone', 'like', "%{$term}%")
+                ->orWhereHas('contacts', fn ($c) => $c->where('email', 'like', "%{$term}%"))))
+            ->when($filters['search'] ?? null, fn ($q, $search) => $q->where('search_id', $search))
+            ->when($filters['category'] ?? null, fn ($q, $category) => $q->where('category', $category))
+            ->when($filters['package'] ?? null, fn ($q, $package) => $q->where('package', $package))
+            ->when($filters['pitchable'] ?? null, fn ($q) => $q->where(fn ($w) => $w
+                ->whereIn('package', self::sellingNow())
+                ->orWhereIn('pitch_package', self::sellingNow())))
+            ->when($filters['state'] ?? null, fn ($q, $state) => $q->where('state', $state))
+            ->scoreTier($filters['score'] ?? null)
+            ->when($filters['email'] ?? null, fn ($q, $status) => $status === 'none'
+                ? $q->whereDoesntHave('contacts', fn ($c) => $c->whereNotNull('email'))
+                : $q->whereHas('contacts', fn ($c) => $c->where('email_status', $status)));
+    }
+
     /** Hot 60+, warm 40-59, cold under 40. */
     public function scopeScoreTier(Builder $query, ?string $tier): void
     {
