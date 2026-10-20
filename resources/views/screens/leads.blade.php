@@ -16,7 +16,9 @@
             @if ($queued > 0)
                 <span class="caption">{{ number_format($queued) }} auditing in the background</span>
             @endif
-            @if ($claudeConnected && $unaudited > 0)
+            @if (auth()->user()->cannot('edit'))
+                {{-- Viewers can't start audits. --}}
+            @elseif ($claudeConnected && $unaudited > 0)
                 <form method="post" action="{{ route('audits.many') }}">
                     @csrf
                     @if (! empty($filters['search']))
@@ -101,7 +103,7 @@
                 <a href="{{ route('leads') }}" class="btn btn--secondary">Clear filters</a>
             @else
                 <p class="muted" style="margin: 0">No businesses yet. Run a search in the Lead Finder and they'll show up here.</p>
-                <a href="{{ route('finder') }}" class="btn btn--primary">Start a search</a>
+                @can('edit')<a href="{{ route('finder') }}" class="btn btn--primary">Start a search</a>@endcan
             @endif
         </section>
     @else
@@ -111,6 +113,7 @@
         </form>
         <div class="row">
             <div class="card card--flush grow-main">
+                @can('edit')
                 <div class="split" style="padding: 8px 12px; border-bottom: 1px solid var(--border)">
                     <span class="caption" id="selected-count">Tick leads to delete them</span>
                     <div class="btn-row">
@@ -127,13 +130,14 @@
                         @endif
                     </div>
                 </div>
+                @endcan
                 <div class="table-wrap">
                     <table class="table">
-                        <thead><tr><th style="width: 32px"><input type="checkbox" id="select-all" aria-label="Select all leads on this page"></th><th>Business</th><th>Category</th><th>Score</th><th>Best fit</th><th>Pitch now</th><th>Email</th><th>Stage</th></tr></thead>
+                        <thead><tr>@can('edit')<th style="width: 32px"><input type="checkbox" id="select-all" aria-label="Select all leads on this page"></th>@endcan<th>Business</th><th>Category</th><th>Score</th><th>Best fit</th><th>Pitch now</th><th>Email</th><th>Stage</th></tr></thead>
                         <tbody>
                         @foreach ($leads as $lead)
                             <tr @class(['is-selected' => $selected && $selected->id === $lead->id])>
-                                <td><input type="checkbox" name="ids[]" value="{{ $lead->id }}" form="bulk-delete" class="lead-check" aria-label="Select {{ $lead->name }}"></td>
+                                @can('edit')<td><input type="checkbox" name="ids[]" value="{{ $lead->id }}" form="bulk-delete" class="lead-check" aria-label="Select {{ $lead->name }}"></td>@endcan
                                 <td>
                                     <a href="{{ request()->fullUrlWithQuery(['lead' => $lead->id]) }}" class="table__name" style="color: var(--ink); text-decoration: none">{{ $lead->name }}</a>
                                     <div class="caption">{{ $lead->location() }}</div>

@@ -25,6 +25,18 @@ Built in Laravel (PHP) with Blade views. Everything shows real data: the Lead Fi
 - **URLs:** `routes/web.php`.
 - **LaiQ packages** (names, prices, who each one fits): `config/cloyne.php`.
 
+## Logins and roles
+
+Everyone signs in. The first time you open Cloyne it asks you to create the **Owner** account (that's you). After that, add people in **Settings → Team**:
+
+| Role | Can do |
+| --- | --- |
+| Owner | Everything, including adding people, changing roles and resetting passwords |
+| Reviewer | Run searches and audits, delete leads (and later approve emails) |
+| Viewer | Look at everything, change nothing |
+
+Adding a person shows a temporary password once. Share it privately; they pick their own the first time they sign in. Forgot the Owner password? On the computer running Cloyne: `php artisan cloyne:owner you@youremail.com` prints a new temporary one.
+
 ## Run it on Windows
 
 You need PHP 8.3+ and Composer once. If you don't have them, open **PowerShell** and run:
@@ -81,5 +93,5 @@ Prefer the terminal? Install Claude Code from PowerShell with `irm https://claud
 - ~~AI audit + scoring (Claude API)~~ ✓ done
 - Email verification, AI audits (Claude API), sending (Instantly), reply checking
 - CRM connection: push booked leads to the LaiQ Digital CRM's API; receive deal-stage webhooks
-- Logins and roles (Owner, Reviewer, Viewer)
+- ~~Logins and roles (Owner, Reviewer, Viewer)~~ ✓ done
 - Hosting on Railway or Render (not HostGator shared hosting, which can't run always-on workers)

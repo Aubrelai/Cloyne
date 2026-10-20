@@ -14,7 +14,7 @@ class ExampleTest extends TestCase
      */
     public function test_every_screen_loads(): void
     {
-        foreach (['/', '/lead-finder', '/leads', '/review', '/campaigns', '/inbox', '/booked', '/settings'] as $url) {
+        foreach (['/', '/lead-finder', '/leads', '/review', '/campaigns', '/inbox', '/booked', '/settings', '/account'] as $url) {
             $this->get($url)->assertOk();
         }
     }

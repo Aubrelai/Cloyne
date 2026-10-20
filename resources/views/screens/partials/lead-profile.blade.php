@@ -96,6 +96,7 @@
         </div>
     @endif
 
+    @can('edit')
     <div class="btn-row" style="padding: 16px">
         @if (\App\Services\Claude::isConfigured())
             <form method="post" action="{{ route('audits.one', $lead) }}">
@@ -112,4 +113,5 @@
             <button type="submit" class="btn btn--ghost">Delete</button>
         </form>
     </div>
+    @endcan
 </aside>

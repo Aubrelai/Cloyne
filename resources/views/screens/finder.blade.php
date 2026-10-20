@@ -20,6 +20,11 @@
         </section>
     @endif
 
+    @cannot('edit')
+        <div class="caption">You're a Viewer: you can see searches and leads, but not start or delete them.</div>
+    @endcannot
+
+    @can('edit')
     <form class="card" method="post" action="{{ route('searches.store') }}">
         @csrf
         <h2 class="card__title">New search</h2>
@@ -63,6 +68,7 @@
             <button type="submit" class="btn btn--primary" @disabled(! $configured)>Start search</button>
         </div>
     </form>
+    @endcan
 
     <section class="card card--flush">
         <div class="split" style="padding: 16px 16px 8px">
@@ -108,6 +114,7 @@
                                     @if ($search->status === 'done' && $search->added)
                                         <a href="{{ route('leads', ['search' => $search->id]) }}" style="font-weight: 600">View leads</a>
                                     @endif
+                                    @can('edit')
                                     @php $leadCount = $search->businesses_count; @endphp
                                     <form method="post" action="{{ route('searches.destroy', $search) }}"
                                           onsubmit="return confirm('Delete the search {{ addslashes($search->label()) }}{{ $leadCount ? ' and its ' . $leadCount . ' ' . Str::plural('lead', $leadCount) : '' }}? This can’t be undone.')">
@@ -115,6 +122,7 @@
                                         @method('DELETE')
                                         <button type="submit" class="btn btn--ghost btn--sm">Delete</button>
                                     </form>
+                                    @endcan
                                 </div>
                             </td>
                         </tr>

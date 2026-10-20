@@ -2,6 +2,7 @@
 <html lang="en" data-theme="dark">
 <head>
     <meta charset="utf-8">
+    <meta name="robots" content="noindex, nofollow">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title') · Cloyne</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,7 +24,23 @@
             @endif
             <div class="topbar__spacer"></div>
             @yield('topbar-actions')
-            <button type="button" class="avatar" aria-label="Account menu">AC</button>
+            @auth
+                <details class="account-menu">
+                    <summary class="avatar" aria-label="Account menu">{{ auth()->user()->initials() }}</summary>
+                    <div class="account-menu__panel">
+                        <div class="account-menu__who">
+                            <strong>{{ auth()->user()->name }}</strong>
+                            <div class="caption">{{ auth()->user()->email }}</div>
+                            <div style="margin-top: 6px"><x-pill tone="neutral">{{ auth()->user()->roleLabel() }}</x-pill></div>
+                        </div>
+                        <a href="{{ route('account') }}" class="account-menu__item">Account and password</a>
+                        <form method="post" action="{{ route('logout') }}">
+                            @csrf
+                            <button type="submit" class="account-menu__item">Sign out</button>
+                        </form>
+                    </div>
+                </details>
+            @endauth
         </header>
 
         @if (session('status') && ! request()->routeIs('finder'))

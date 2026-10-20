@@ -15,7 +15,7 @@
                 @endif
             </div>
         </div>
-        <a href="{{ route('finder') }}" class="btn btn--primary">Start a search</a>
+        @can('edit')<a href="{{ route('finder') }}" class="btn btn--primary">Start a search</a>@endcan
     </div>
 
     <div class="stats">
@@ -91,7 +91,7 @@
             @endforeach
             @if ($searches->isEmpty() && $recentSearches->isEmpty())
                 <div class="caption">No searches yet.</div>
-                <a href="{{ route('finder') }}" class="btn btn--secondary btn--sm" style="align-self: flex-start">Start a search</a>
+                @can('edit')<a href="{{ route('finder') }}" class="btn btn--secondary btn--sm" style="align-self: flex-start">Start a search</a>@endcan
             @endif
         </section>
     </div>

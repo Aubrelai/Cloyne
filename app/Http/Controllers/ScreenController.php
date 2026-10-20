@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Business;
 use App\Models\Search;
+use App\Models\User;
 use App\Services\Apify;
 use App\Services\Claude;
 use App\Services\LeadImporter;
@@ -135,6 +136,7 @@ class ScreenController extends Controller
             'apifyConnected' => Apify::isConfigured(),
             'searchCount' => Search::count(),
             'claudeConnected' => Claude::isConfigured(),
+            'team' => User::orderByRaw("case role when 'owner' then 0 when 'reviewer' then 1 else 2 end")->orderBy('name')->get(),
         ]);
     }
 }

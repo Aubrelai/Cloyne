@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -11,17 +10,12 @@ class DatabaseSeeder extends Seeder
     use WithoutModelEvents;
 
     /**
-     * Seed the application's database. Safe to run more than once.
+     * Cloyne seeds nothing by default. The Owner account is created on the
+     * first-run screen (/setup) or with: php artisan cloyne:owner
+     * Sample leads are for tests only: php artisan db:seed --class=LeadSeeder
      */
     public function run(): void
     {
-        if (! User::where('email', 'test@example.com')->exists()) {
-            User::factory()->create([
-                'name' => 'Test User',
-                'email' => 'test@example.com',
-            ]);
-        }
-
-        // Sample leads are for tests only: php artisan db:seed --class=LeadSeeder
+        //
     }
 }

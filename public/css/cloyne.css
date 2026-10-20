@@ -236,3 +236,17 @@ h1, h2, h3 { margin: 0; }
   .main { padding: 0 var(--space-4) var(--space-6); }
   .side-col, .panel { max-width: none; }
 }
+
+/* ---------- Sign in + account menu ---------- */
+.auth { width: 100%; max-width: 400px; margin: 0 auto; padding: 12vh var(--space-4) var(--space-8); display: flex; flex-direction: column; gap: var(--space-4); }
+.auth__brand { font: 600 28px/36px var(--font-display); color: var(--ink); }
+.auth__sub { font-size: 12px; line-height: 16px; color: var(--ink-muted); margin-top: calc(var(--space-4) * -1); }
+.auth .btn--primary { width: 100%; }
+.account-menu { position: relative; }
+.account-menu > summary { list-style: none; display: inline-flex; align-items: center; justify-content: center; }
+.account-menu > summary::-webkit-details-marker { display: none; }
+.account-menu__panel { position: absolute; right: 0; top: calc(100% + 8px); z-index: 20; min-width: 240px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--shadow-panel); padding: var(--space-2); display: flex; flex-direction: column; gap: 2px; }
+.account-menu__who { padding: var(--space-2) var(--space-3) var(--space-3); border-bottom: 1px solid var(--border); margin-bottom: var(--space-1); }
+.account-menu__item { display: block; width: 100%; text-align: left; padding: var(--space-2) var(--space-3); border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--ink); font: 500 14px/20px var(--font-sans); text-decoration: none; cursor: pointer; }
+.account-menu__item:hover { background: var(--surface-raised); }
+.secret { padding: 10px 12px; border-radius: var(--radius-sm); background: var(--surface-raised); font-family: var(--font-mono); font-size: 15px; user-select: all; }
