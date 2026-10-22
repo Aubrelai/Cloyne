@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Jobs\WriteDraft;
 use App\Models\Audit;
 use App\Models\Business;
+use App\Models\Setting;
 use Illuminate\Support\Str;
 
 /**
@@ -20,6 +21,7 @@ class Auditor
 
     public function audit(Business $business): Audit
     {
+        Setting::applyToConfig(); // the worker runs for hours; pick up packages changed in Settings
         $signals = $this->scanner->scan($business->website);
 
         $result = $this->claude->callTool(
@@ -68,6 +70,7 @@ class Auditor
 
         $business->update([
             'stage' => $disqualified ? 'excluded' : $business->stage,
+            'exclude_reason' => $disqualified ? Str::limit('Not a fit: '.($result['disqualify_reason'] ?? 'ruled out by the audit'), 250) : $business->exclude_reason,
             'audit_status' => null,
             'audit_error' => null,
         ]);
@@ -145,6 +148,7 @@ class Auditor
             'website on Google' => $business->website ?? 'none',
             'rating' => $business->rating ? (string) $business->rating : null,
             'review count' => $business->review_count,
+            'chain' => $business->is_chain ? 'yes: '.Business::CHAIN_LOCATIONS.'+ Google listings share this website' : null,
         ], fn ($v) => ! is_null($v));
 
         return "Business (from Google Maps):\n" . json_encode($google, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)

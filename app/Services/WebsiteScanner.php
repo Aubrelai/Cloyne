@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Contact;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Throwable;
@@ -149,8 +150,7 @@ class WebsiteScanner
 
         return collect($matches[0])
             ->map(fn ($e) => strtolower(trim($e, '.')))
-            ->reject(fn ($e) => preg_match('/\.(png|jpe?g|gif|webp|svg|css|js)$/', $e)
-                || Str::contains($e, ['sentry', 'wixpress', 'example.com', 'domain.com', 'yourname', 'email.com', '@2x', 'godaddy', 'squarespace']))
+            ->reject(fn ($e) => ! Contact::usableEmail($e))
             ->unique()
             // Emails on the business's own domain first.
             ->sortBy(fn ($e) => Str::endsWith($e, '@' . $siteHost) ? 0 : 1)

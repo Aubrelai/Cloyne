@@ -17,12 +17,15 @@
         </div>
         <div class="field">
             <label for="password" class="label">Password</label>
-            <input id="password" name="password" type="password" class="input" required autocomplete="current-password">
+            <div class="input-row">
+                <input id="password" name="password" type="password" class="input" required autocomplete="current-password">
+                <button type="button" class="btn btn--ghost" data-show-password="password" aria-pressed="false" aria-label="Show password">Show</button>
+            </div>
         </div>
         <label class="caption" style="display: flex; gap: 8px; align-items: center">
             <input type="checkbox" name="remember" value="1"> Keep me signed in on this computer
         </label>
-        <button type="submit" class="btn btn--primary">Sign in</button>
+        <button type="submit" class="btn btn--primary" data-busy="Signing in…">Sign in</button>
         <div class="caption">Forgot your password? Ask the Owner to reset it in Settings → Team.</div>
     </form>
 @endsection

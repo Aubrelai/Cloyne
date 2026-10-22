@@ -6,6 +6,7 @@ use App\Models\Search;
 use App\Services\Apify;
 use App\Services\LeadImporter;
 use App\Services\LeadRemover;
+use App\Support\FriendlyError;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Throwable;
@@ -30,10 +31,35 @@ class SearchController extends Controller
             return back()->withInput()->withErrors(['apify' => 'Add your Apify key (APIFY_TOKEN) to the .env file first.']);
         }
 
+        // Same search in the last 30 days? Ask before paying for it again.
+        $recent = Search::recentMatch($data['category'], $data['area']);
+        if ($recent && ! $request->boolean('repeat_ok')) {
+            return back()->withInput()->with('repeat', [
+                'label' => $recent->label(),
+                'when' => $recent->created_at->diffForHumans(),
+                'found' => $recent->found,
+            ]);
+        }
+
+        return $this->start($data, $apify);
+    }
+
+    /** "Run again": the same search, started now. */
+    public function again(Search $search, Apify $apify): RedirectResponse
+    {
+        return $this->start([
+            'category' => $search->category,
+            'area' => $search->area,
+            'max_results' => $search->max_results,
+        ], $apify);
+    }
+
+    private function start(array $data, Apify $apify): RedirectResponse
+    {
         try {
             $run = $apify->startMapsSearch($data['category'], $data['area'], (int) $data['max_results']);
         } catch (Throwable $e) {
-            return back()->withInput()->withErrors(['apify' => $e->getMessage()]);
+            return back()->withInput()->withErrors(['apify' => FriendlyError::message($e, 'Apify')]);
         }
 
         Search::create($data + [
@@ -42,7 +68,7 @@ class SearchController extends Controller
         ]);
 
         return redirect()->route('finder')
-            ->with('status', "Searching Google Maps for {$data['category']} in {$data['area']}. This usually takes 1–5 minutes.");
+            ->with('status', "Searching Google Maps for {$data['category']} in {$data['area']}. This usually takes 5–15 minutes.");
     }
 
     /** Delete a search and every lead it found. */

@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\Business;
 use App\Models\Draft;
 use App\Services\Drafter;
+use App\Support\FriendlyError;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Throwable;
@@ -29,7 +30,7 @@ class WriteDraft implements ShouldQueue
 
     public function failed(?Throwable $e): void
     {
-        $this->draft->update(['status' => 'failed', 'error' => $e?->getMessage() ?? 'Writing failed']);
+        $this->draft->update(['status' => 'failed', 'error' => FriendlyError::message($e)]);
     }
 
     /** Start a draft for each business that doesn't already have one in play. */

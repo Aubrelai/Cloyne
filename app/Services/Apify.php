@@ -47,6 +47,18 @@ class Apify
         ];
     }
 
+    /** Check the key works. Returns the Apify username. */
+    public function testConnection(): string
+    {
+        $response = $this->client()->timeout(15)->get('/users/me');
+
+        if ($response->failed()) {
+            throw new RuntimeException($this->errorMessage($response->json(), $response->status()));
+        }
+
+        return (string) ($response->json('data.username') ?: 'your account');
+    }
+
     /** Apify's status for a run: READY, RUNNING, SUCCEEDED, FAILED, ABORTED, TIMED-OUT, ... */
     public function runStatus(string $runId): string
     {

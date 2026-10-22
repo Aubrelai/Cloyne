@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Business;
 use App\Services\Auditor;
+use App\Support\FriendlyError;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Throwable;
@@ -30,7 +31,7 @@ class AuditBusiness implements ShouldQueue
     {
         $this->business->update([
             'audit_status' => 'failed',
-            'audit_error' => $e?->getMessage() ?? 'Audit failed',
+            'audit_error' => FriendlyError::message($e),
         ]);
     }
 

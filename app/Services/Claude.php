@@ -18,6 +18,25 @@ class Claude
         return filled(config('services.anthropic.key'));
     }
 
+    /** Check the key works without spending tokens (lists models). */
+    public function testConnection(): void
+    {
+        if (! self::isConfigured()) {
+            throw new RuntimeException('Claude API key missing. Add ANTHROPIC_API_KEY to your .env file.');
+        }
+
+        $response = Http::withHeaders([
+            'x-api-key' => config('services.anthropic.key'),
+            'anthropic-version' => '2023-06-01',
+        ])->acceptJson()->timeout(15)->get('https://api.anthropic.com/v1/models', ['limit' => 1]);
+
+        if ($response->failed()) {
+            throw new RuntimeException($response->status() === 401
+                ? 'Claude rejected the API key. Check ANTHROPIC_API_KEY in your .env file.'
+                : 'Claude API error (HTTP '.$response->status().').');
+        }
+    }
+
     /**
      * Ask Claude to fill in one tool's input. Returns that input as an array.
      *

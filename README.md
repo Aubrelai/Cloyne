@@ -14,16 +14,26 @@ Built in Laravel (PHP) with Blade views. Everything shows real data: the Lead Fi
 | Inbox | `/inbox` | `resources/views/screens/inbox.blade.php` |
 | Booked | `/booked` | `resources/views/screens/booked.blade.php` |
 | Settings | `/settings` | `resources/views/screens/settings.blade.php` |
+| Account | `/account` | `resources/views/screens/account.blade.php` |
 
 ## Where things live
 
 - **Colors, fonts, spacing:** `public/css/cloyne.css`. Every color is a variable at the top of the file (dark theme first, then light). Change a value there and the whole app updates.
 - **Shared layout:** `resources/views/layouts/app.blade.php` (page shell + top bar) and `resources/views/partials/sidebar.blade.php` (left menu).
-- **Reusable pieces:** `resources/views/components/`: `<x-stat>`, `<x-score>`, `<x-pill>`, `<x-icon>`.
+- **Reusable pieces:** `resources/views/components/`: `<x-stat>`, `<x-score>`, `<x-pill>`, `<x-icon>`, `<x-phone>`, `<x-copy>`, `<x-time>`.
+- **Page behaviours** (confirm boxes, busy buttons, copy, shortcuts): `public/js/cloyne.js`.
+- **Data clean-up helpers** (phones, business names, links, error messages): `app/Support/`.
 - **Sample leads for tests:** `database/seeders/LeadSeeder.php` (not loaded into your real database).
 - **Which data each screen gets:** `app/Http/Controllers/ScreenController.php`.
 - **URLs:** `routes/web.php`.
 - **LaiQ packages** (names, prices, who each one fits): `config/cloyne.php`.
+
+## Everyday shortcuts
+
+- Press `/` to search and `?` to see every keyboard shortcut.
+- Leads: `↑` `↓` move between leads. Review queue: `J` `K` next and previous, `A` approve, `S` skip, `R` rewrite, `E` edit.
+- Change theme (dark, light, match computer) from your initials in the top right; set your time zone on the Account page.
+- Owners change the email rules, booking link, mailing address and packages on sale in **Settings**, no file editing needed.
 
 ## Logins and roles
 

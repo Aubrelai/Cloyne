@@ -51,6 +51,9 @@ return [
     'apify' => [
         'token' => env('APIFY_TOKEN'),
         'maps_actor' => env('APIFY_MAPS_ACTOR', 'compass/crawler-google-places'),
+        // Rough price per 1,000 businesses, used for the cost shown before a search.
+        // Check Apify's page for the Google Maps scraper and update it in .env if it changes.
+        'price_per_1000' => (float) env('APIFY_PRICE_PER_1000', 4),
     ],
 
 ];

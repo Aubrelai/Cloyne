@@ -6,6 +6,7 @@ use App\Jobs\AuditBusiness;
 use App\Services\Apify;
 use App\Services\Claude;
 use App\Services\LeadImporter;
+use App\Support\FriendlyError;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Throwable;
@@ -31,6 +32,24 @@ class Search extends Model
     public function label(): string
     {
         return "{$this->category} · {$this->area}";
+    }
+
+    /** The same category + area searched in the last 30 days (not failed), if any. */
+    public static function recentMatch(string $category, string $area): ?self
+    {
+        return static::query()
+            ->whereRaw('lower(category) = ?', [mb_strtolower(trim($category))])
+            ->whereRaw('lower(area) = ?', [mb_strtolower(trim($area))])
+            ->where('status', '!=', 'failed')
+            ->where('created_at', '>=', now()->subDays(30))
+            ->latest()
+            ->first();
+    }
+
+    /** Minutes since the search started. */
+    public function minutesRunning(): int
+    {
+        return (int) $this->created_at->diffInMinutes(now());
     }
 
     public function isRunning(): bool
@@ -72,6 +91,9 @@ class Search extends Model
                 'status' => 'done',
                 'found' => $result['found'],
                 'added' => $result['added'],
+                'skipped_existing' => $result['existing'],
+                'skipped_dismissed' => $result['dismissed'],
+                'skipped_closed' => $result['closed'],
                 'error' => null,
                 'finished_at' => now(),
             ]);
@@ -81,7 +103,7 @@ class Search extends Model
             }
         } catch (Throwable $e) {
             // Network hiccup or Apify error: keep it running and show the reason; the next check retries.
-            $this->update(['error' => $e->getMessage()]);
+            $this->update(['error' => FriendlyError::message($e, 'Apify')]);
         }
     }
 }

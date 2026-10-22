@@ -6,7 +6,9 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DraftController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\ScreenController;
+use App\Http\Controllers\SavedViewController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\TeamController;
 use Illuminate\Support\Facades\Route;
 
@@ -29,6 +31,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/account', [AccountController::class, 'show'])->name('account');
     Route::put('/account/name', [AccountController::class, 'updateName'])->name('account.name');
     Route::put('/account/password', [AccountController::class, 'updatePassword'])->name('account.password');
+    Route::put('/account/theme', [AccountController::class, 'updateTheme'])->name('account.theme');
+    Route::put('/account/preferences', [AccountController::class, 'updatePreferences'])->name('account.preferences');
 });
 
 Route::middleware(['auth', 'fresh-password'])->group(function () {
@@ -43,17 +47,27 @@ Route::middleware(['auth', 'fresh-password'])->group(function () {
         Route::get('/settings', 'settings')->name('settings');
     });
 
+    // Saved views are personal, so every role can save their own.
+    Route::post('/leads/views', [SavedViewController::class, 'store'])->name('views.store');
+    Route::delete('/leads/views/{view}', [SavedViewController::class, 'destroy'])->name('views.destroy');
+
     // Checking a running search only pulls in its results, so viewers can do it too.
     Route::post('/lead-finder/check', [SearchController::class, 'check'])->name('searches.check');
 
     Route::middleware('can:edit')->group(function () {
         Route::post('/lead-finder/searches', [SearchController::class, 'store'])->name('searches.store');
         Route::delete('/lead-finder/searches/{search}', [SearchController::class, 'destroy'])->name('searches.destroy');
+        Route::post('/lead-finder/searches/{search}/again', [SearchController::class, 'again'])->name('searches.again');
         Route::post('/leads/{business}/audit', [AuditController::class, 'one'])->name('audits.one');
         Route::post('/leads/audit', [AuditController::class, 'many'])->name('audits.many');
         Route::delete('/leads/{business}', [LeadController::class, 'destroy'])->name('leads.destroy');
         Route::post('/leads/delete', [LeadController::class, 'destroyMany'])->name('leads.destroy-many');
         Route::post('/leads/delete-matching', [LeadController::class, 'destroyMatching'])->name('leads.destroy-matching');
+        Route::post('/leads/exclude', [LeadController::class, 'excludeMany'])->name('leads.exclude-many');
+        Route::post('/leads/{business}/exclude', [LeadController::class, 'exclude'])->name('leads.exclude');
+        Route::post('/leads/{business}/include', [LeadController::class, 'include'])->name('leads.include');
+        Route::post('/leads/audit-selected', [AuditController::class, 'selected'])->name('audits.selected');
+        Route::post('/leads/write-selected', [DraftController::class, 'writeSelected'])->name('drafts.write-selected');
 
         // Review queue (Step 4). Nothing here sends email.
         Route::post('/leads/{business}/draft', [DraftController::class, 'write'])->name('drafts.write');
@@ -63,6 +77,13 @@ Route::middleware(['auth', 'fresh-password'])->group(function () {
         Route::post('/review/{draft}/skip', [DraftController::class, 'skip'])->name('drafts.skip');
         Route::post('/review/{draft}/rewrite', [DraftController::class, 'rewrite'])->name('drafts.rewrite');
         Route::post('/review/{draft}/reopen', [DraftController::class, 'reopen'])->name('drafts.reopen');
+    });
+
+    Route::middleware('can:manage-team')->prefix('/settings')->group(function () {
+        Route::put('/outreach', [SettingsController::class, 'updateOutreach'])->name('settings.outreach');
+        Route::delete('/outreach', [SettingsController::class, 'resetOutreach'])->name('settings.outreach.reset');
+        Route::put('/selling', [SettingsController::class, 'updateSelling'])->name('settings.selling');
+        Route::post('/test/{service}', [SettingsController::class, 'test'])->whereIn('service', ['apify', 'claude'])->name('settings.test');
     });
 
     Route::middleware('can:manage-team')->prefix('/settings/team')->name('team.')->group(function () {

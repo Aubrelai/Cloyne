@@ -1,14 +1,26 @@
 @php
     $audit = $lead->latestAudit;
     $contact = $lead->primaryContact;
-    $tier = is_null($lead->score) ? null : ($lead->score >= 60 ? 'hot' : ($lead->score >= 40 ? 'warm' : 'cold'));
+    $hotScore = (int) config('cloyne.outreach.min_score', 60);
+    $tier = is_null($lead->score) ? null : ($lead->score >= $hotScore ? 'hot' : ($lead->score >= 40 ? 'warm' : 'cold'));
+    $auditAge = $lead->auditAgeDays();
+    $stale = $auditAge !== null && $auditAge >= 90;
+    $signals = $audit?->signals ?? [];
 @endphp
 <aside class="panel" aria-label="Lead profile">
     <div class="panel__head">
         <div>
-            <h2 style="font: 600 20px/28px var(--font-display)">{{ $lead->name }}</h2>
+            <h2 style="font: 600 20px/28px var(--font-display)">{{ $lead->displayName() }}</h2>
+            @if ($lead->displayName() !== $lead->name)
+                <div class="caption" title="Name on Google">On Google: {{ $lead->name }}</div>
+            @endif
             <div class="caption" style="margin-top: 2px">
-                {{ collect([$lead->category, $lead->location(), $audit ? 'Audited ' . $audit->audited_at->diffForHumans() : 'Not audited yet'])->filter()->implode(' · ') }}
+                {{ collect([$lead->category, $lead->location()])->filter()->implode(' · ') }} ·
+                @if ($audit)
+                    <span @class(['stale' => $stale])>Audited <x-time :at="$audit->audited_at" /></span>
+                @else
+                    Not audited yet
+                @endif
             </div>
         </div>
         <a href="{{ request()->fullUrlWithQuery(['lead' => null]) }}" class="btn btn--ghost btn--sm" aria-label="Close lead profile"><x-icon name="close" width="16" height="16" /></a>
@@ -26,18 +38,40 @@
                     <x-pill :tone="$lead->license_status === 'Active' ? 'success' : 'warning'">License {{ strtolower($lead->license_status) }}</x-pill>
                 @endif
                 <x-pill tone="neutral">{{ $lead->stageLabel() }}</x-pill>
+                @if ($lead->is_chain)<x-pill tone="warning">Chain</x-pill>@endif
+                @if ($stale)<x-pill tone="warning">Audit {{ $auditAge }} days old</x-pill>@endif
             </span>
         </div>
     </div>
 
+    @if ($lead->stage === 'excluded')
+        <div class="panel__section">
+            <div class="split" style="flex-wrap: wrap">
+                <span><x-pill tone="warning">Excluded</x-pill> {{ $lead->exclude_reason ?: 'No reason given' }}</span>
+                @can('edit')
+                    <form method="post" action="{{ route('leads.include', $lead) }}">
+                        @csrf
+                        <button type="submit" class="btn btn--secondary btn--sm">Bring back</button>
+                    </form>
+                @endcan
+            </div>
+        </div>
+    @endif
+
     <div class="panel__section">
         <dl class="facts">
             <dt>Contact</dt><dd>{{ $contact?->name ? $contact->name . ($contact->role ? ' · ' . $contact->role : '') : '—' }}</dd>
-            <dt>Email</dt><dd class="mono">{{ $contact?->email ?? '—' }}</dd>
-            <dt>Phone</dt><dd class="mono">{{ $lead->phone ?? '—' }}</dd>
-            <dt>Website</dt><dd>@if ($lead->website)<a href="{{ $lead->website }}" target="_blank" rel="noopener">{{ parse_url($lead->website, PHP_URL_HOST) }}</a>@else — @endif</dd>
+            <dt>Email</dt><dd>@if ($contact?->email)<span class="with-copy"><a href="mailto:{{ $contact->email }}" class="mono tel">{{ $contact->email }}</a><x-copy :value="$contact->email" label="email" /></span>@else — @endif
+                @foreach ($lead->contacts->whereNotNull('email')->where('id', '!=', $contact?->id)->take(3) as $other)
+                    <div class="with-copy caption"><span class="mono">{{ $other->email }}</span><x-copy :value="$other->email" label="email" /></div>
+                @endforeach
+            </dd>
+            <dt>Phone</dt><dd><x-phone :number="$lead->phone" /></dd>
+            <dt>Website</dt><dd>@if ($lead->website)<span class="with-copy"><a href="{{ $lead->website }}" target="_blank" rel="noopener">{{ $lead->website_host ?: parse_url($lead->website, PHP_URL_HOST) }}</a><x-copy :value="$lead->website" label="website" /></span>@else — @endif</dd>
+            <dt>Google</dt><dd>@if ($lead->mapsUrl())<a href="{{ $lead->mapsUrl() }}" target="_blank" rel="noopener">Open in Google Maps</a>@else — @endif</dd>
             <dt>License</dt><dd class="mono">{{ collect([$lead->license_number, $lead->license_status, $lead->license_expires_on ? 'exp. ' . $lead->license_expires_on->format('M Y') : null])->filter()->implode(' · ') ?: '—' }}</dd>
-            <dt>Reviews</dt><dd>{{ $lead->rating ? $lead->rating . ' stars · ' . $lead->review_count . ' on Google' : '—' }}</dd>
+            <dt>Reviews</dt><dd>{{ $lead->rating ? $lead->rating . ' stars · ' . number_format($lead->review_count) . ' on Google' : '—' }}</dd>
+            <dt>Added</dt><dd><x-time :at="$lead->created_at" />{{ $lead->search ? ' · ' . $lead->search->label() : '' }}</dd>
         </dl>
     </div>
 
@@ -84,6 +118,35 @@
         @if ($audit->pitch)
             <div class="finding" style="margin: 0 16px">Best pitch: {{ $audit->pitch }}</div>
         @endif
+        @if ($signals)
+            @php
+                $yes = fn ($v) => $v ? 'Yes' : 'No';
+                $scan = array_filter([
+                    'Site loaded' => isset($signals['reachable']) ? $yes($signals['reachable']) : null,
+                    'Built with' => $signals['built_with'] ?? null,
+                    'Meta Pixel' => isset($signals['meta_pixel']) ? $yes($signals['meta_pixel']) : null,
+                    'Google tag' => isset($signals['google_tag']) ? $yes($signals['google_tag']) : null,
+                    'Google Ads tag' => isset($signals['google_ads_tag']) ? $yes($signals['google_ads_tag']) : null,
+                    'Mobile-ready tag' => isset($signals['mobile_viewport_tag']) ? $yes($signals['mobile_viewport_tag']) : null,
+                    'Contact form' => isset($signals['has_form']) ? $yes($signals['has_form']) : null,
+                    'Booking tool' => ! empty($signals['booking_tools']) ? implode(', ', (array) $signals['booking_tools']) : (isset($signals['booking_tools']) ? 'None found' : null),
+                    'Chat widget' => isset($signals['chat_widget']) ? (is_string($signals['chat_widget']) ? $signals['chat_widget'] : $yes($signals['chat_widget'])) : null,
+                    'Video' => isset($signals['has_video']) ? $yes($signals['has_video']) : null,
+                    'Copyright year' => $signals['copyright_year'] ?? null,
+                    'Facebook' => $signals['facebook_page'] ?? null,
+                    'Instagram' => $signals['instagram'] ?? null,
+                    'Emails found' => ! empty($signals['emails']) ? implode(', ', (array) $signals['emails']) : null,
+                ], fn ($v) => ! is_null($v) && $v !== '');
+            @endphp
+            <details class="scan-details">
+                <summary>Show what the scan saw</summary>
+                <dl class="facts">
+                    @foreach ($scan as $label => $value)
+                        <dt>{{ $label }}</dt><dd>@if (is_string($value) && str_starts_with($value, 'http'))<a href="{{ $value }}" target="_blank" rel="noopener">{{ Str::limit(preg_replace('#^https?://(www\.)?#', '', $value), 40) }}</a>@else{{ $value }}@endif</dd>
+                    @endforeach
+                </dl>
+            </details>
+        @endif
     @else
         <div class="panel__section caption">
             @if ($lead->audit_status === 'queued')
@@ -119,7 +182,7 @@
         @if (\App\Services\Claude::isConfigured())
             <form method="post" action="{{ route('audits.one', $lead) }}">
                 @csrf
-                <button type="submit" @class(['btn', 'btn--secondary' => $audit, 'btn--primary' => ! $audit])>{{ $audit ? 'Re-run audit' : 'Audit now' }}</button>
+                <button type="submit" @class(['btn', 'btn--secondary' => $audit && ! $stale, 'btn--primary' => ! $audit || $stale]) data-busy="Auditing…">{{ $audit ? 'Re-run audit' : 'Audit now' }}</button>
             </form>
         @else
             <span class="caption">Add <span class="mono">ANTHROPIC_API_KEY</span> to <span class="mono">.env</span> to audit.</span>
@@ -128,15 +191,31 @@
             && (! $draft || in_array($draft->status, ['skipped', 'failed'], true)))
             <form method="post" action="{{ route('drafts.write', $lead) }}">
                 @csrf
-                <button type="submit" class="btn btn--secondary">Write email</button>
+                <button type="submit" class="btn btn--secondary" data-busy="Writing…">Write email</button>
             </form>
         @endif
         <form method="post" action="{{ route('leads.destroy', $lead) }}"
-              onsubmit="return confirm('Delete {{ addslashes($lead->name) }}? This can’t be undone, and it won’t come back in future searches.')">
+              data-confirm="Delete {{ $lead->displayName() }}? This can’t be undone, and it won’t come back in future searches. To keep a record, exclude it instead."
+              data-confirm-button="Delete lead">
             @csrf
             @method('DELETE')
             <button type="submit" class="btn btn--ghost">Delete</button>
         </form>
     </div>
+    @if ($lead->stage !== 'excluded')
+        <form method="post" action="{{ route('leads.exclude', $lead) }}" class="exclude-form">
+            @csrf
+            <label for="exclude-reason" class="label">Exclude instead</label>
+            <div class="input-row">
+                <select id="exclude-reason" name="reason" class="select">
+                    @foreach (\App\Models\Business::EXCLUDE_REASONS as $reason)
+                        <option value="{{ $reason }}">{{ $reason }}</option>
+                    @endforeach
+                </select>
+                <button type="submit" class="btn btn--secondary">Exclude</button>
+            </div>
+            <span class="caption">Keeps the lead and its history, but stops audits, emails and calls.</span>
+        </form>
+    @endif
     @endcan
 </aside>

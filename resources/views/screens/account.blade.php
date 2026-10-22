@@ -31,11 +31,17 @@
         <div class="stats">
             <div class="field">
                 <label for="current_password" class="label">{{ $user->must_change_password ? 'Temporary password' : 'Current password' }}</label>
-                <input id="current_password" name="current_password" type="password" class="input" required autocomplete="current-password">
+                <div class="input-row">
+                    <input id="current_password" name="current_password" type="password" class="input" required autocomplete="current-password">
+                    <button type="button" class="btn btn--ghost" data-show-password="current_password" aria-pressed="false" aria-label="Show password">Show</button>
+                </div>
             </div>
             <div class="field">
                 <label for="password" class="label">New password</label>
-                <input id="password" name="password" type="password" class="input" required minlength="{{ \App\Models\User::MIN_PASSWORD }}" autocomplete="new-password">
+                <div class="input-row">
+                    <input id="password" name="password" type="password" class="input" required minlength="{{ \App\Models\User::MIN_PASSWORD }}" autocomplete="new-password" data-strength="password-hint">
+                    <button type="button" class="btn btn--ghost" data-show-password="password" aria-pressed="false" aria-label="Show new password">Show</button>
+                </div>
             </div>
             <div class="field">
                 <label for="password_confirmation" class="label">New password again</label>
@@ -43,12 +49,46 @@
             </div>
         </div>
         <div class="split" style="border-top: 1px solid var(--border); padding-top: 16px; flex-wrap: wrap">
-            <span class="caption">At least {{ \App\Models\User::MIN_PASSWORD }} characters.</span>
+            <span class="caption" id="password-hint" aria-live="polite">At least {{ \App\Models\User::MIN_PASSWORD }} characters.</span>
             <button type="submit" class="btn btn--primary">Change password</button>
         </div>
     </form>
 
     @unless ($user->must_change_password)
+        <form class="card" method="post" action="{{ route('account.preferences') }}">
+            @csrf
+            @method('PUT')
+            <h2 class="card__title">Preferences</h2>
+            @if ($errors->hasAny(['timezone', 'theme']))
+                <div role="alert"><x-pill tone="danger">Not saved</x-pill> {{ $errors->first('timezone') ?: $errors->first('theme') }}</div>
+            @endif
+            <div class="stats">
+                <div class="field">
+                    <label for="theme" class="label">Theme</label>
+                    <select id="theme" name="theme" class="select">
+                        @foreach (['dark' => 'Dark', 'light' => 'Light', 'system' => 'Match my computer'] as $value => $label)
+                            <option value="{{ $value }}" @selected(old('theme', $user->theme) === $value)>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="timezone" class="label">Time zone</label>
+                    <select id="timezone" name="timezone" class="select">
+                        @foreach (\App\Models\User::TIMEZONES as $value => $label)
+                            <option value="{{ $value }}" @selected(old('timezone', $user->timezone) === $value)>{{ $label }}</option>
+                        @endforeach
+                        @unless (array_key_exists($user->timezone, \App\Models\User::TIMEZONES))
+                            <option value="{{ $user->timezone }}" selected>{{ $user->timezone }}</option>
+                        @endunless
+                    </select>
+                </div>
+            </div>
+            <div class="split" style="flex-wrap: wrap">
+                <span class="caption">Dates and times in Cloyne show in your time zone. Now: {{ now($user->timezone)->format('g:i A T') }}</span>
+                <button type="submit" class="btn btn--secondary">Save preferences</button>
+            </div>
+        </form>
+
         <form class="card" method="post" action="{{ route('account.name') }}">
             @csrf
             @method('PUT')

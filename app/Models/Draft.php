@@ -91,6 +91,43 @@ class Draft extends Model
     }
 
     /**
+     * The audit finding this email talks about, found by matching the finding's
+     * key words in the email. Null when the email names none of them.
+     *
+     * @return array{title: string, detail: string}|null
+     */
+    public function claimedFinding(): ?array
+    {
+        $checks = $this->business?->latestAudit?->checks ?? [];
+        // Links (like the booking link) don't count as talking about something.
+        $text = Str::lower(preg_replace('#https?://\S+#', ' ', $this->subject.' '.$this->body));
+        $synonyms = [
+            'mobile' => ['phone', 'mobile', 'resize', 'pinch', 'zoom', 'small screen'],
+            'booking' => ['book', 'booking', 'schedule', 'appointment', 'calendar'],
+            'form' => ['form', 'contact', 'inquir', 'quote request'],
+            'pixel' => ['pixel', 'retarget', 'facebook ads', 'meta ads', 'ad visitors', 'track'],
+            'review' => ['review', 'stars', 'rating'],
+            'website' => ['website', 'site', 'web page'],
+            'ads' => ['ads', 'advertis'],
+            'video' => ['video'],
+            'chat' => ['chat'],
+            'copyright' => ['dated', 'outdated', 'old site', 'years old', 'refresh'],
+            'google' => ['google'],
+        ];
+
+        foreach (collect($checks)->sortByDesc('points') as $check) {
+            $title = Str::lower(($check['title'] ?? '').' '.($check['detail'] ?? ''));
+            foreach ($synonyms as $topic => $words) {
+                if (str_contains($title, $topic) && Str::contains($text, $words)) {
+                    return ['title' => $check['title'], 'detail' => $check['detail'] ?? ''];
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Quick checks against the outreach rules, shown to the reviewer.
      *
      * @return list<string>

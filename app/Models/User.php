@@ -16,7 +16,7 @@ use Illuminate\Support\Str;
  * Roles: owner (everything, including the team), reviewer (searches, audits,
  * deletes, and later approving emails), viewer (look only).
  */
-#[Fillable(['name', 'email', 'password', 'role', 'must_change_password'])]
+#[Fillable(['name', 'email', 'password', 'role', 'must_change_password', 'theme', 'timezone'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -34,6 +34,21 @@ class User extends Authenticatable
     protected $attributes = [
         'role' => 'viewer',
         'must_change_password' => false,
+        'theme' => 'dark',
+        'timezone' => 'America/New_York',
+    ];
+
+    /** Time zones offered on the Account page (US first). */
+    public const TIMEZONES = [
+        'America/New_York' => 'Eastern',
+        'America/Chicago' => 'Central',
+        'America/Denver' => 'Mountain',
+        'America/Phoenix' => 'Arizona',
+        'America/Los_Angeles' => 'Pacific',
+        'America/Anchorage' => 'Alaska',
+        'Pacific/Honolulu' => 'Hawaii',
+        'America/Puerto_Rico' => 'Atlantic (Puerto Rico)',
+        'UTC' => 'UTC',
     ];
 
     protected function casts(): array
@@ -44,6 +59,11 @@ class User extends Authenticatable
             'must_change_password' => 'boolean',
             'password' => 'hashed',
         ];
+    }
+
+    public function savedViews(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(SavedView::class);
     }
 
     public function isOwner(): bool

@@ -13,6 +13,7 @@ class Audit extends Model
     {
         return [
             'checks' => 'array',
+            'signals' => 'array',
             'audited_at' => 'datetime',
         ];
     }

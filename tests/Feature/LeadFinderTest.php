@@ -60,8 +60,10 @@ class LeadFinderTest extends TestCase
 
         $search->refresh();
         $this->assertSame('done', $search->status);
-        $this->assertSame(2, $search->found);
+        $this->assertSame(3, $search->found);
         $this->assertSame(1, $search->added);
+        $this->assertSame(1, $search->skipped_existing);
+        $this->assertSame(1, $search->skipped_closed);
 
         $new = Business::where('place_id', 'p1')->sole();
         $this->assertSame('TX', $new->state);

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Business;
 use App\Models\Draft;
+use App\Models\Setting;
 use Illuminate\Support\Str;
 
 /**
@@ -15,19 +16,34 @@ class Drafter
     public function __construct(private Claude $claude) {}
 
     /** Fill in a draft (creates one if needed). */
-    public function write(Business $business, ?Draft $draft = null): Draft
+    /** Quick rewrites offered in the Review queue. */
+    public const REWRITES = [
+        'shorter' => 'Rewrite it shorter: 60 words or fewer, same gap, same call to action.',
+        'casual' => 'Rewrite it more casual and conversational, like a quick note from one owner to another. Same gap, same call to action.',
+        'angle' => 'Rewrite it built on a DIFFERENT gap from the audit findings than the previous version used.',
+    ];
+
+    public function write(Business $business, ?Draft $draft = null, ?string $rewrite = null): Draft
     {
+        Setting::applyToConfig(); // the worker runs for hours; pick up rules changed in Settings
         $business->loadMissing(['latestAudit', 'primaryContact']);
         $contact = $business->contacts()->whereNotNull('email')->oldest()->first();
 
         $draft ??= $business->drafts()->create(['status' => 'writing']);
+        $previous = $rewrite && $draft->body ? ['subject' => $draft->subject, 'body' => $draft->body, 'angle' => $draft->angle] : null;
         $draft->update(['status' => 'writing', 'error' => null]);
+
+        $message = $this->leadBrief($business, $contact);
+        if ($previous && isset(self::REWRITES[$rewrite])) {
+            $message .= "\n\nPrevious version (angle: {$previous['angle']}):\nSubject: {$previous['subject']}\n{$previous['body']}\n\n"
+                .self::REWRITES[$rewrite];
+        }
 
         $model = config('services.anthropic.draft_model');
         $result = $this->claude->callTool(
             model: $model,
             system: $this->systemPrompt(),
-            userMessage: $this->leadBrief($business, $contact),
+            userMessage: $message,
             tool: $this->tool(),
             maxTokens: 1200,
         );
@@ -124,7 +140,7 @@ class Drafter
         $package = $packageKey ? (Business::packages()[$packageKey] ?? null) : null;
 
         $data = array_filter([
-            'business' => $business->name,
+            'business' => $business->displayName(),
             'category' => $business->google_category ?: $business->category,
             'location' => $business->location() ?: null,
             'website' => $business->website ?: 'none',

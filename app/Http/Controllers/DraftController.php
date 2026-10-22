@@ -7,6 +7,7 @@ use App\Models\Business;
 use App\Models\Draft;
 use App\Services\Claude;
 use App\Services\Drafter;
+use App\Support\FriendlyError;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Throwable;
@@ -32,9 +33,9 @@ class DraftController extends Controller
         try {
             $draft = $drafter->write($business);
         } catch (Throwable $e) {
-            $business->drafts()->where('status', 'writing')->update(['status' => 'failed', 'error' => $e->getMessage()]);
+            $business->drafts()->where('status', 'writing')->update(['status' => 'failed', 'error' => FriendlyError::message($e)]);
 
-            return back()->withErrors(['draft' => $e->getMessage()]);
+            return back()->withErrors(['draft' => FriendlyError::message($e)]);
         }
 
         return redirect()->route('review', ['draft' => $draft->id])->with('status', "Email written for {$business->name}.");
@@ -52,6 +53,27 @@ class DraftController extends Controller
         return back()->with('status', $count
             ? "Writing {$count} ".str('email')->plural($count).' in the background. Keep the Cloyne worker window open; they appear here as they finish.'
             : 'Every hot lead with an email already has a draft.');
+    }
+
+    /** Queue emails for the ticked leads that qualify. */
+    public function writeSelected(Request $request): RedirectResponse
+    {
+        if (! Claude::isConfigured()) {
+            return back()->withErrors(['draft' => 'Add your Claude API key (ANTHROPIC_API_KEY) to the .env file first.']);
+        }
+        $ids = $request->validate(['ids' => ['required', 'array', 'max:500'], 'ids.*' => ['integer']],
+            ['ids.required' => 'Tick at least one lead first.'])['ids'];
+
+        $leads = Business::whereIn('id', $ids)
+            ->whereHas('audits')
+            ->whereHas('contacts', fn ($c) => $c->whereNotNull('email'))
+            ->where('stage', '!=', 'excluded')
+            ->get();
+        $count = WriteDraft::queueFor($leads);
+        $skipped = count($ids) - $count;
+
+        return back()->with('status', ($count ? "Writing {$count} ".str('email')->plural($count).' in the background.' : 'No emails started.')
+            .($skipped > 0 ? " {$skipped} skipped: not audited, no email, excluded, or already drafted." : ''));
     }
 
     public function update(Request $request, Draft $draft): RedirectResponse
@@ -73,7 +95,8 @@ class DraftController extends Controller
         $draft->update(['status' => 'approved', 'reviewed_by' => $request->user()->id, 'reviewed_at' => now()]);
 
         return redirect()->route('review', ['draft' => $this->nextPending($draft)])
-            ->with('status', "Approved the email to {$draft->business->name}. It sends once sending is set up (Step 5).");
+            ->with('status', "Approved the email to {$draft->business->displayName()}. It sends once sending is set up (Step 5).")
+            ->with('undo', ['url' => route('drafts.reopen', $draft), 'label' => 'Undo']);
     }
 
     public function skip(Request $request, Draft $draft): RedirectResponse
@@ -86,12 +109,16 @@ class DraftController extends Controller
         }
 
         return redirect()->route('review', ['draft' => $this->nextPending($draft)])
-            ->with('status', "Skipped {$draft->business->name}. It won't be emailed.");
+            ->with('status', "Skipped {$draft->business->displayName()}. It won't be emailed.")
+            ->with('undo', ['url' => route('drafts.reopen', $draft), 'label' => 'Undo']);
     }
 
     /** Throw away this version and have Claude write a new one now. */
-    public function rewrite(Draft $draft, Drafter $drafter): RedirectResponse
+    public function rewrite(Request $request, Draft $draft, Drafter $drafter): RedirectResponse
     {
+        $style = $request->input('style');
+        $style = array_key_exists((string) $style, Drafter::REWRITES) ? $style : null;
+
         abort_if($draft->status === 'approved', 409, 'Move it back to review before rewriting.');
 
         if ($error = $this->cantWrite($draft->business)) {
@@ -99,14 +126,16 @@ class DraftController extends Controller
         }
 
         try {
-            $drafter->write($draft->business, $draft);
+            $drafter->write($draft->business, $draft, $style);
         } catch (Throwable $e) {
-            $draft->update(['status' => 'failed', 'error' => $e->getMessage()]);
+            $draft->update(['status' => 'failed', 'error' => FriendlyError::message($e)]);
 
-            return back()->withErrors(['draft' => $e->getMessage()]);
+            return back()->withErrors(['draft' => FriendlyError::message($e)]);
         }
 
-        return redirect()->route('review', ['draft' => $draft->id])->with('status', 'New version written.');
+        $what = ['shorter' => 'Shorter version', 'casual' => 'More casual version', 'angle' => 'New angle'][$style] ?? 'New version';
+
+        return redirect()->route('review', ['draft' => $draft->id])->with('status', "{$what} written.");
     }
 
     /** Undo an approval or a skip: put the draft back in the queue. */

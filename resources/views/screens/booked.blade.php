@@ -15,14 +15,15 @@
     @else
         <section class="card card--flush table-wrap">
             <table class="table">
-                <thead><tr><th>Business</th><th>Category</th><th>Best fit</th><th>Booked</th></tr></thead>
+                <thead><tr><th>Business</th><th>Phone</th><th>Category</th><th>Best fit</th><th>Booked</th></tr></thead>
                 <tbody>
                 @foreach ($bookings as $b)
                     <tr>
-                        <td><a href="{{ route('leads', ['lead' => $b->id]) }}" class="table__name" style="color: var(--ink); text-decoration: none">{{ $b->name }}</a><div class="caption">{{ $b->location() }}</div></td>
+                        <td><a href="{{ route('leads', ['lead' => $b->id]) }}" class="table__name" style="color: var(--ink); text-decoration: none">{{ $b->displayName() }}</a><div class="caption">{{ $b->location() }}</div></td>
+                        <td><x-phone :number="$b->phone" /></td>
                         <td>{{ $b->category }}</td>
                         <td>{{ $b->packageShort() ?? '—' }}</td>
-                        <td class="caption">{{ $b->updated_at->diffForHumans() }}</td>
+                        <td class="caption"><x-time :at="$b->updated_at" /></td>
                     </tr>
                 @endforeach
                 </tbody>

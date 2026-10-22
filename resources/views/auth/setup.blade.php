@@ -28,8 +28,11 @@
         </div>
         <div class="field">
             <label for="password" class="label">Password</label>
-            <input id="password" name="password" type="password" class="input" required minlength="{{ \App\Models\User::MIN_PASSWORD }}" autocomplete="new-password">
-            <span class="caption">At least {{ \App\Models\User::MIN_PASSWORD }} characters.</span>
+            <div class="input-row">
+                <input id="password" name="password" type="password" class="input" required minlength="{{ \App\Models\User::MIN_PASSWORD }}" autocomplete="new-password" data-strength="password-hint">
+                <button type="button" class="btn btn--ghost" data-show-password="password" aria-pressed="false" aria-label="Show password">Show</button>
+            </div>
+            <span class="caption" id="password-hint" aria-live="polite">At least {{ \App\Models\User::MIN_PASSWORD }} characters.</span>
         </div>
         <div class="field">
             <label for="password_confirmation" class="label">Password again</label>

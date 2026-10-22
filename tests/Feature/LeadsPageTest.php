@@ -17,7 +17,10 @@ class LeadsPageTest extends TestCase
 
         $this->get('/leads')
             ->assertOk()
-            ->assertSeeInOrder(['Sunshine Roofing Co.', 'Glow Med Spa', 'Gulf Coast Pools']);
+            ->assertSeeInOrder(['Sunshine Roofing', 'Glow Med Spa'])
+            ->assertDontSee('Gulf Coast Pools'); // excluded leads are hidden unless you ask for them
+
+        $this->get('/leads?stage=excluded')->assertSee('Gulf Coast Pools');
     }
 
     public function test_score_filter_only_shows_hot_leads(): void
@@ -26,7 +29,7 @@ class LeadsPageTest extends TestCase
 
         $this->get('/leads?score=hot')
             ->assertOk()
-            ->assertSee('Sunshine Roofing Co.')
+            ->assertSee('Sunshine Roofing')
             ->assertDontSee('Gulf Coast Pools');
     }
 
@@ -37,7 +40,7 @@ class LeadsPageTest extends TestCase
         $this->get('/leads?package=website')
             ->assertOk()
             ->assertSee('Casa Verde Taqueria')
-            ->assertDontSee('Sunshine Roofing Co.');
+            ->assertDontSee('Sunshine Roofing');
     }
 
     public function test_can_pitch_now_filter_respects_what_laiq_is_selling(): void
@@ -48,7 +51,7 @@ class LeadsPageTest extends TestCase
         // Glow Med Spa fits Scale, already has a good site: nothing to pitch while only Starter is on sale.
         $this->get('/leads?pitchable=1')
             ->assertOk()
-            ->assertSee('Sunshine Roofing Co.')
+            ->assertSee('Sunshine Roofing')
             ->assertDontSee('Glow Med Spa');
     }
 

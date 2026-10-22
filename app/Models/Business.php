@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Support\BusinessName;
+use App\Support\Phone;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -21,12 +23,31 @@ class Business extends Model
         'excluded' => 'Excluded',
     ];
 
+    /** Reasons offered when excluding a lead instead of deleting it. */
+    public const EXCLUDE_REASONS = [
+        'Not a fit',
+        'Chain or franchise',
+        'Already a client',
+        'Asked not to be contacted',
+        'Closed or moved',
+        'Duplicate',
+    ];
+
+    /** Websites many businesses share, so they never mean "same business" or "chain". */
+    public const SHARED_HOSTS = ['facebook.com', 'm.facebook.com', 'instagram.com', 'business.site', 'linktr.ee',
+        'yelp.com', 'google.com', 'sites.google.com', 'wixsite.com', 'square.site', 'godaddysites.com', 'yellowpages.com',
+        'nextdoor.com', 'tiktok.com', 'linkedin.com', 'x.com', 'twitter.com', 'youtube.com', 'squarespace.com', 'weebly.com'];
+
+    /** A website shared by this many listings marks them all as a chain. */
+    public const CHAIN_LOCATIONS = 4;
+
     protected $guarded = ['id'];
 
     /** Defaults for a new business, so they're set before it's first saved. */
     protected $attributes = [
         'stage' => 'new',
         'source' => 'google_maps',
+        'is_chain' => false,
     ];
 
     protected function casts(): array
@@ -34,6 +55,7 @@ class Business extends Model
         return [
             'rating' => 'decimal:1',
             'license_expires_on' => 'date',
+            'is_chain' => 'boolean',
         ];
     }
 
@@ -176,6 +198,68 @@ class Business extends Model
         return self::STAGES[$this->stage] ?? ucfirst($this->stage);
     }
 
+    /** The name as a person would write it ("Bright Smile Dental", not "BRIGHT SMILE DENTAL LLC"). */
+    public function displayName(): string
+    {
+        return BusinessName::clean($this->name) ?: (string) $this->name;
+    }
+
+    /** "(305) 555-0100" */
+    public function phoneDisplay(): ?string
+    {
+        return Phone::display($this->phone);
+    }
+
+    /** Google Maps page for this business. */
+    public function mapsUrl(): ?string
+    {
+        if ($this->place_id) {
+            return 'https://www.google.com/maps/place/?q=place_id:'.urlencode($this->place_id);
+        }
+
+        $query = trim($this->name.' '.$this->location());
+
+        return $query ? 'https://www.google.com/maps/search/?api=1&query='.urlencode($query) : null;
+    }
+
+    /** Mark every listing whose website is shared by CHAIN_LOCATIONS or more listings. */
+    public static function flagChains(array $hosts): void
+    {
+        $hosts = array_values(array_diff(array_unique(array_filter($hosts)), self::SHARED_HOSTS));
+        if (! $hosts) {
+            return;
+        }
+
+        $chains = static::query()->whereIn('website_host', $hosts)
+            ->groupBy('website_host')->havingRaw('count(*) >= ?', [self::CHAIN_LOCATIONS])
+            ->pluck('website_host');
+
+        if ($chains->isNotEmpty()) {
+            static::whereIn('website_host', $chains)->update(['is_chain' => true]);
+        }
+    }
+
+    /** Set aside a lead without deleting it: it stays in Cloyne, but gets no audits, emails or calls. */
+    public function exclude(string $reason): void
+    {
+        $this->update(['stage' => 'excluded', 'exclude_reason' => $reason]);
+        $this->drafts()->whereIn('status', ['writing', 'pending'])->update(['status' => 'skipped', 'reviewed_at' => now()]);
+    }
+
+    /** Undo an exclude: back to Audited (or New if never audited). */
+    public function include(): void
+    {
+        $this->update(['stage' => is_null($this->score) ? 'new' : 'audited', 'exclude_reason' => null]);
+    }
+
+    /** Days since the latest audit, or null. */
+    public function auditAgeDays(): ?int
+    {
+        $at = $this->latestAudit?->audited_at;
+
+        return $at ? (int) $at->diffInDays(now()) : null;
+    }
+
     /** "Wellington, FL" */
     public function location(): string
     {
@@ -183,7 +267,7 @@ class Business extends Model
     }
 
     /** Query-string filters the Leads page understands. */
-    public const FILTERS = ['q', 'search', 'category', 'package', 'pitchable', 'state', 'score', 'email'];
+    public const FILTERS = ['q', 'search', 'category', 'package', 'pitchable', 'state', 'score', 'email', 'audited', 'stage', 'chain'];
 
     /** Apply the Leads page filters (used for the list and for "delete all matching"). */
     public function scopeFiltered(Builder $query, array $filters): void
@@ -201,17 +285,25 @@ class Business extends Model
                 ->orWhereIn('pitch_package', self::sellingNow())))
             ->when($filters['state'] ?? null, fn ($q, $state) => $q->where('state', $state))
             ->scoreTier($filters['score'] ?? null)
-            ->when($filters['email'] ?? null, fn ($q, $status) => $status === 'none'
-                ? $q->whereDoesntHave('contacts', fn ($c) => $c->whereNotNull('email'))
-                : $q->whereHas('contacts', fn ($c) => $c->where('email_status', $status)));
+            ->when($filters['email'] ?? null, fn ($q, $status) => match ($status) {
+                'none' => $q->whereDoesntHave('contacts', fn ($c) => $c->whereNotNull('email')),
+                'any' => $q->whereHas('contacts', fn ($c) => $c->whereNotNull('email')),
+                default => $q->whereHas('contacts', fn ($c) => $c->where('email_status', $status)),
+            })
+            ->when($filters['audited'] ?? null, fn ($q, $audited) => $audited === 'no' ? $q->whereNull('score') : $q->whereNotNull('score'))
+            ->when($filters['stage'] ?? null, fn ($q, $stage) => $q->where('stage', $stage))
+            // Excluded leads stay out of the list unless you ask for them.
+            ->when(($filters['stage'] ?? null) === null, fn ($q) => $q->where('stage', '!=', 'excluded'))
+            ->when($filters['chain'] ?? null, fn ($q, $chain) => $q->where('is_chain', $chain === 'yes'));
     }
 
     /** Hot 60+, warm 40-59, cold under 40. */
     public function scopeScoreTier(Builder $query, ?string $tier): void
     {
+        $hot = (int) config('cloyne.outreach.min_score', 60);
         match ($tier) {
-            'hot' => $query->where('score', '>=', 60),
-            'warm' => $query->whereBetween('score', [40, 59]),
+            'hot' => $query->where('score', '>=', $hot),
+            'warm' => $query->whereBetween('score', [40, $hot - 1]),
             'cold' => $query->where('score', '<', 40),
             default => null,
         };

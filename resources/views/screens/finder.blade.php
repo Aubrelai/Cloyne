@@ -8,10 +8,6 @@
         <div class="page-sub">Pick a type of business and an area. Cloyne searches Google Maps and adds every business it finds to your Leads.</div>
     </div>
 
-    @if (session('status'))
-        <div class="finding" role="status">{{ session('status') }}</div>
-    @endif
-
     @if (! $configured)
         <section class="card" style="border-color: var(--warning)">
             <div class="split"><h2 class="card__title">Connect Apify to start searching</h2><x-pill tone="warning">Not connected</x-pill></div>
@@ -25,7 +21,7 @@
     @endcannot
 
     @can('edit')
-    <form class="card" method="post" action="{{ route('searches.store') }}">
+    <form class="card" method="post" action="{{ route('searches.store') }}" id="search-form">
         @csrf
         <h2 class="card__title">New search</h2>
 
@@ -34,6 +30,18 @@
                 @foreach ($errors->all() as $error)
                     <span><x-pill tone="danger">Error</x-pill> {{ $error }}</span>
                 @endforeach
+            </div>
+        @endif
+
+        @if ($repeat = session('repeat'))
+            <div class="card" style="border-color: var(--warning); background: var(--warning-soft)" role="alert">
+                <div class="split" style="flex-wrap: wrap">
+                    <div>
+                        <strong>You already searched {{ $repeat['label'] }} {{ $repeat['when'] }}</strong>
+                        <div class="caption">{{ is_null($repeat['found']) ? 'It may still be running.' : number_format($repeat['found']) . ' businesses found then.' }} Searching again costs the same and mostly finds the same businesses.</div>
+                    </div>
+                    <button type="submit" name="repeat_ok" value="1" class="btn btn--secondary" data-busy="Starting…">Search again anyway</button>
+                </div>
             </div>
         @endif
 
@@ -51,12 +59,17 @@
             </div>
             <div class="field">
                 <label for="area" class="label">Area</label>
-                <input id="area" name="area" type="text" class="input" required maxlength="120"
+                <input id="area" name="area" type="text" class="input" required maxlength="120" list="area-ideas"
                        value="{{ old('area') }}" placeholder="e.g. Dallas, TX or Palm Beach County, FL">
+                <datalist id="area-ideas">
+                    @foreach ($recentAreas as $area)
+                        <option value="{{ $area }}"></option>
+                    @endforeach
+                </datalist>
             </div>
             <div class="field">
                 <label for="max_results" class="label">Max businesses</label>
-                <select id="max_results" name="max_results" class="select">
+                <select id="max_results" name="max_results" class="select" data-cost-per="{{ $pricePerResult }}" data-cost-target="search-cost">
                     @foreach ($maxOptions as $option)
                         <option value="{{ $option }}" @selected((int) old('max_results', 100) === $option)>{{ number_format($option) }}</option>
                     @endforeach
@@ -64,8 +77,11 @@
             </div>
         </div>
         <div class="split" style="border-top: 1px solid var(--border); padding-top: 16px; flex-wrap: wrap;">
-            <span class="caption">Apify charges per business found. Start small (100) and check your usage at console.apify.com.</span>
-            <button type="submit" class="btn btn--primary" @disabled(! $configured)>Start search</button>
+            <span class="caption">
+                <strong id="search-cost">Up to {{ number_format(old('max_results', 100)) }} businesses · about ${{ number_format(old('max_results', 100) * $pricePerResult, 2) }}</strong>
+                · Apify charges per business found; check usage at console.apify.com.
+            </span>
+            <button type="submit" class="btn btn--primary" @disabled(! $configured) data-busy="Starting…">Start search</button>
         </div>
     </form>
     @endcan
@@ -76,7 +92,7 @@
             @if ($searches->contains->isRunning())
                 <form method="post" action="{{ route('searches.check') }}">
                     @csrf
-                    <button type="submit" class="btn btn--secondary btn--sm">Check now</button>
+                    <button type="submit" class="btn btn--secondary btn--sm" data-busy="Checking…">Check now</button>
                 </form>
             @endif
         </div>
@@ -85,20 +101,43 @@
             <div class="caption" style="padding: 0 16px 16px">No searches yet. Start one above.</div>
         @else
             <div class="table-wrap">
-                <table class="table" style="min-width: 720px">
-                    <thead><tr><th>Search</th><th>Found</th><th>New leads</th><th>Status</th><th></th></tr></thead>
+                <table class="table" style="min-width: 760px">
+                    <thead><tr><th>Search</th><th>Found</th><th>New leads</th><th>Audited</th><th>Status</th><th></th></tr></thead>
                     <tbody>
                     @foreach ($searches as $search)
+                        @php
+                            $skipped = collect([
+                                $search->skipped_existing ? number_format($search->skipped_existing) . ' already in Cloyne' : null,
+                                $search->skipped_dismissed ? number_format($search->skipped_dismissed) . ' deleted before' : null,
+                                $search->skipped_closed ? number_format($search->skipped_closed) . ' closed' : null,
+                            ])->filter();
+                        @endphp
                         <tr>
                             <td>
                                 <div class="table__name">{{ $search->label() }}</div>
-                                <div class="caption">Up to {{ number_format($search->max_results) }} · started {{ $search->created_at->diffForHumans() }}</div>
+                                <div class="caption">Up to {{ number_format($search->max_results) }} · started <x-time :at="$search->created_at" /></div>
                             </td>
                             <td class="mono">{{ is_null($search->found) ? '—' : number_format($search->found) }}</td>
-                            <td class="mono brand-text">{{ is_null($search->added) ? '—' : number_format($search->added) }}</td>
+                            <td>
+                                <span class="mono brand-text">{{ is_null($search->added) ? '—' : number_format($search->added) }}</span>
+                                @if ($skipped->isNotEmpty())
+                                    <div class="caption">{{ $skipped->implode(' · ') }}</div>
+                                @endif
+                            </td>
+                            <td>
+                                @if ($search->status === 'done' && $search->businesses_count > 0)
+                                    <span class="mono">{{ number_format($search->audited_count) }}</span><span class="caption"> of {{ number_format($search->businesses_count) }}</span>
+                                    @if ($search->hot_count > 0)
+                                        <div class="caption"><span class="brand-text">{{ number_format($search->hot_count) }} hot</span></div>
+                                    @endif
+                                @else
+                                    <span class="caption">—</span>
+                                @endif
+                            </td>
                             <td>
                                 @if ($search->status === 'running')
                                     <x-pill tone="signal">Searching</x-pill>
+                                    <div class="caption" style="margin-top: 4px">{{ $search->minutesRunning() < 1 ? 'Just started' : $search->minutesRunning() . ' min so far' }} · usually 5–15 min</div>
                                     @if ($search->error)
                                         <div class="caption" style="margin-top: 4px">{{ $search->error }}</div>
                                     @endif
@@ -111,17 +150,26 @@
                             </td>
                             <td>
                                 <div class="btn-row" style="justify-content: flex-end; align-items: center">
-                                    @if ($search->status === 'done' && $search->added)
+                                    @if ($search->status === 'done' && $search->businesses_count)
                                         <a href="{{ route('leads', ['search' => $search->id]) }}" style="font-weight: 600">View leads</a>
                                     @endif
                                     @can('edit')
-                                    @php $leadCount = $search->businesses_count; @endphp
-                                    <form method="post" action="{{ route('searches.destroy', $search) }}"
-                                          onsubmit="return confirm('Delete the search {{ addslashes($search->label()) }}{{ $leadCount ? ' and its ' . $leadCount . ' ' . Str::plural('lead', $leadCount) : '' }}? This can’t be undone.')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn--ghost btn--sm">Delete</button>
-                                    </form>
+                                        @if (! $search->isRunning() && $configured)
+                                            <form method="post" action="{{ route('searches.again', $search) }}"
+                                                  data-confirm="Run {{ $search->label() }} again for up to {{ number_format($search->max_results) }} businesses? Apify charges again; businesses already in Cloyne aren't added twice."
+                                                  data-confirm-button="Run again">
+                                                @csrf
+                                                <button type="submit" class="btn btn--ghost btn--sm" data-busy="Starting…">Run again</button>
+                                            </form>
+                                        @endif
+                                        @php $leadCount = $search->businesses_count; @endphp
+                                        <form method="post" action="{{ route('searches.destroy', $search) }}"
+                                              data-confirm="Delete the search {{ $search->label() }}{{ $leadCount ? ' and its ' . number_format($leadCount) . ' ' . Str::plural('lead', $leadCount) : '' }}? This can’t be undone."
+                                              data-confirm-button="Delete search">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn--ghost btn--sm">Delete</button>
+                                        </form>
                                     @endcan
                                 </div>
                             </td>

@@ -26,6 +26,25 @@ class AccountController extends Controller
         return back()->with('status', 'Name saved.');
     }
 
+    public function updateTheme(Request $request): RedirectResponse
+    {
+        $data = $request->validate(['theme' => ['required', 'in:dark,light,system']]);
+        $request->user()->update($data);
+
+        return back();
+    }
+
+    public function updatePreferences(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'timezone' => ['required', 'timezone:all'],
+            'theme' => ['required', 'in:dark,light,system'],
+        ]);
+        $request->user()->update($data);
+
+        return back()->with('status', 'Preferences saved.');
+    }
+
     public function updatePassword(Request $request): RedirectResponse
     {
         $request->validate([

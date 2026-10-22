@@ -7,7 +7,11 @@
         <div>
             <h1 class="page-title">Review queue</h1>
             <div class="page-sub">
-                {{ number_format($counts['pending'] ?? 0) }} waiting · {{ number_format($counts['approved'] ?? 0) }} approved · Nothing sends until a person approves it.
+                {{ number_format($counts['pending'] ?? 0) }} waiting · {{ number_format($counts['approved'] ?? 0) }} approved
+                @if ($reviewedToday)
+                    · you reviewed {{ number_format($reviewedToday) }} today
+                @endif
+                · Nothing sends until a person approves it. Press <kbd>?</kbd> for shortcuts.
             </div>
         </div>
         <div class="btn-row" style="align-items: center">
@@ -18,7 +22,7 @@
                 @if ($claudeConnected && $draftable > 0)
                     <form method="post" action="{{ route('drafts.write-many') }}">
                         @csrf
-                        <button type="submit" class="btn btn--primary">Write {{ number_format(min($draftable, 200)) }} {{ Str::plural('email', $draftable) }} for hot leads</button>
+                        <button type="submit" class="btn btn--primary" data-busy="Queuing…">Write {{ number_format(min($draftable, 200)) }} {{ Str::plural('email', $draftable) }} for hot leads</button>
                     </form>
                 @elseif (! $claudeConnected)
                     <span class="caption">Add <span class="mono">ANTHROPIC_API_KEY</span> to <span class="mono">.env</span> to write emails</span>
@@ -55,10 +59,11 @@
                         @endif
                     @endforeach
                 </nav>
+                <div data-key-list data-next="j" data-prev="k">
                 @forelse ($drafts as $item)
-                    <a href="{{ route('review', ['status' => $status, 'draft' => $item->id, 'page' => $drafts->currentPage()]) }}" @class(['list-item', 'is-selected' => $selected && $selected->id === $item->id])>
+                    <a href="{{ route('review', ['status' => $status, 'draft' => $item->id, 'page' => $drafts->currentPage()]) }}" data-key-item @class(['list-item', 'is-selected' => $selected && $selected->id === $item->id])>
                         <div class="split">
-                            <strong>{{ $item->business->name }}</strong>
+                            <strong>{{ $item->business->displayName() }}</strong>
                             @if (! is_null($item->business->score))
                                 <x-score :value="$item->business->score" />
                             @endif
@@ -71,6 +76,7 @@
                     @endphp
                     <div class="caption" style="padding: 16px">{{ $emptyText }}</div>
                 @endforelse
+                </div>
                 @if ($drafts->hasPages())
                     <div class="split" style="padding: 8px 12px; border-top: 1px solid var(--border)">
                         <span class="caption">Page {{ $drafts->currentPage() }} of {{ $drafts->lastPage() }}</span>
