@@ -35,13 +35,17 @@ class LeadImporter
             }
 
             $website = WebAddress::clean($item['website'] ?? null);
+            if ($website && strlen($website) > 255) {
+                $website = strtok($website, '?'); // MySQL columns hold 255 characters; drop a long query string
+                $website = strlen($website) > 255 ? 'https://'.WebAddress::host($website) : $website;
+            }
             $attributes = [
                 'name' => Str::limit(trim($item['title']), 250, ''),
-                'google_category' => $item['categoryName'] ?? null,
-                'street' => $item['street'] ?? null,
-                'city' => $item['city'] ?? null,
+                'google_category' => $this->short($item['categoryName'] ?? null),
+                'street' => $this->short($item['street'] ?? null),
+                'city' => $this->short($item['city'] ?? null, 120),
                 'state' => $this->stateCode($item['state'] ?? null),
-                'phone' => Phone::normalize($item['phone'] ?? null),
+                'phone' => $this->short(Phone::normalize($item['phone'] ?? null), 40),
                 'website' => $website,
                 'website_host' => WebAddress::host($website),
                 'rating' => isset($item['totalScore']) ? round((float) $item['totalScore'], 1) : null,
@@ -106,6 +110,12 @@ class LeadImporter
         }
 
         return null;
+    }
+
+    /** Fit text into a database column (MySQL refuses values that are too long). */
+    private function short(?string $value, int $max = 250): ?string
+    {
+        return blank($value) ? null : Str::limit(trim($value), $max, '');
     }
 
     /** "Florida" → "FL". Leaves 2-letter codes alone; unknown → null. */

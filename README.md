@@ -47,6 +47,34 @@ Everyone signs in. The first time you open Cloyne it asks you to create the **Ow
 
 Adding a person shows a temporary password once. Share it privately; they pick their own the first time they sign in. Forgot the Owner password? On the computer running Cloyne: `php artisan cloyne:owner you@youremail.com` prints a new temporary one.
 
+## Put it online (DreamHost)
+
+Cloyne runs at **https://cloyne.laiqdigital.com** on DreamHost shared hosting with the MySQL database `cloyne`. Before the first install, turn on the free HTTPS certificate for cloyne.laiqdigital.com in the DreamHost panel and set the site's PHP version to 8.3 or newer.
+
+Sign in to the server with SSH (Windows: PowerShell; Mac: Terminal):
+
+```
+ssh YOUR_SSH_USER@YOUR_DREAMHOST_SERVER
+```
+
+(Use the SSH user and server from the DreamHost panel, under Websites > Manage > SFTP/SSH. They're kept out of GitHub on purpose.)
+
+**First install** (asks for the database password and optional API keys, hidden as you type, then creates the Owner account):
+
+```
+git clone https://github.com/Aubrelai/Cloyne.git ~/cloyne-app && bash ~/cloyne-app/deploy/dreamhost.sh
+```
+
+**Every update** after changes are pushed to GitHub:
+
+```
+bash ~/cloyne-app/deploy/dreamhost.sh
+```
+
+**Change the database password or add API keys later:** `bash ~/cloyne-app/deploy/dreamhost.sh settings`
+
+Online, a cron job runs `php artisan schedule:run` every minute (`routes/console.php`): it works through queued audits and email drafts, then stops, and checks Lead Finder searches every two minutes. Passwords and keys live only in `~/cloyne-app/.env` on the server.
+
 ## Run it on Windows
 
 You need PHP 8.3+ and Composer once. If you don't have them, open **PowerShell** and run:

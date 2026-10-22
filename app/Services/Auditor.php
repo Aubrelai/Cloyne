@@ -64,7 +64,7 @@ class Auditor
         if ($email !== '' && in_array($email, $signals['emails'] ?? [], true)) {
             $business->contacts()->firstOrCreate(
                 ['email' => $email],
-                ['name' => $result['contact_name'] ?? null, 'email_status' => 'unverified'],
+                ['name' => isset($result['contact_name']) ? Str::limit((string) $result['contact_name'], 120, '') : null, 'email_status' => 'unverified'],
             );
         }
 

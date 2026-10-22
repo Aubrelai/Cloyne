@@ -6,6 +6,7 @@ use App\Models\Draft;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Throwable;
@@ -22,6 +23,11 @@ class AppServiceProvider extends ServiceProvider
         // Roles: use @can('edit') / @can('manage-team') in views and can:… on routes.
         Gate::define('edit', fn (User $user) => $user->canEdit());
         Gate::define('manage-team', fn (User $user) => $user->isOwner());
+
+        // Online, every link uses https (the site address in APP_URL).
+        if ($this->app->isProduction() && str_starts_with((string) config('app.url'), 'https://')) {
+            URL::forceScheme('https');
+        }
 
         // Values the Owner changed in Settings override config/cloyne.php and .env.
         Setting::applyToConfig();
