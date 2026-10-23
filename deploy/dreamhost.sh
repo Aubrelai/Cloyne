@@ -84,7 +84,13 @@ if [ ! -f "$COMPOSER" ]; then
     mkdir -p "$(dirname "$COMPOSER")"
     curl -sS https://getcomposer.org/installer | "$PHP" -- --quiet --install-dir="$(dirname "$COMPOSER")" --filename=composer.phar
 fi
-"$PHP" "$COMPOSER" install --no-dev --optimize-autoloader --no-interaction --no-progress
+COMPOSER_FLAGS="--no-dev --optimize-autoloader --no-interaction --no-progress"
+if ! "$PHP" "$COMPOSER" install $COMPOSER_FLAGS; then
+    # The saved package list was made for a different PHP version: pick packages again for this one.
+    echo "Choosing packages again for PHP $("$PHP" -r 'echo PHP_VERSION;')..."
+    rm -f composer.lock
+    "$PHP" "$COMPOSER" update $COMPOSER_FLAGS
+fi
 
 # ---------------------------------------------------------------------------
 step "4/8  Settings"
