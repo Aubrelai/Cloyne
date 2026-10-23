@@ -400,3 +400,5 @@ th[aria-sort="ascending"] .sort-link, th[aria-sort="descending"] .sort-link { co
 .lead-map .leaflet-tooltip { background: var(--surface-raised); color: var(--ink); border: 1px solid var(--border); border-radius: var(--radius-sm); box-shadow: none; font-size: 12px; padding: 4px 8px; }
 .lead-map .leaflet-tooltip-top::before { border-top-color: var(--border); }
 .lead-map.has-popup .leaflet-tooltip-pane { display: none; }
+.lead-map.is-osm-dark .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(.9) contrast(.85) saturate(.4); }
+.lead-map .leaflet-overlay-pane img { pointer-events: none; }

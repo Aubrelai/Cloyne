@@ -1,5 +1,5 @@
 /* Cloyne: the Dashboard lead map. Draws <div data-lead-map data-lead-map-points="[...]"> on a real
-   map (Leaflet + free CARTO tiles), zoomed to where the leads are. Colors come from the CSS variables. */
+   map (Leaflet + free Esri gray tiles, OpenStreetMap as backup), zoomed to where the leads are. Colors come from the CSS variables. */
 (function () {
     'use strict';
 
@@ -30,11 +30,27 @@
     });
     box.addEventListener('click', () => map.scrollWheelZoom.enable(), { once: true });
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/' + (light ? 'light_all' : 'dark_all') + '/{z}/{x}/{y}{r}.png', {
-        maxZoom: 19,
-        subdomains: 'abcd',
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    // Map background: Esri's free gray canvas (dark or light) with a separate layer for place names.
+    // If those tiles fail, fall back to OpenStreetMap, darkened with a CSS filter in dark mode.
+    const esri = (name) => 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/' + name + '/MapServer/tile/{z}/{y}/{x}';
+    const shade = light ? 'Light' : 'Dark';
+    const base = L.tileLayer(esri('World_' + shade + '_Gray_Base'), {
+        maxZoom: 16,
+        attribution: 'Map &copy; <a href="https://www.esri.com">Esri</a>, HERE, Garmin, &copy; OpenStreetMap contributors',
     }).addTo(map);
+    const names = L.tileLayer(esri('World_' + shade + '_Gray_Reference'), { maxZoom: 16, pane: 'overlayPane' }).addTo(map);
+
+    let failures = 0;
+    base.on('tileerror', () => {
+        if (++failures !== 3) return;
+        map.removeLayer(base);
+        map.removeLayer(names);
+        box.classList.toggle('is-osm-dark', !light);
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        }).addTo(map);
+    });
 
     function popup(p) {
         const el = document.createElement('div');
