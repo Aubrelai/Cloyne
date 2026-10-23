@@ -123,7 +123,8 @@ class Apify
 
         return match (true) {
             $status === 401 => 'Apify rejected the key. Check APIFY_TOKEN in your .env file.',
-            $status === 402 => 'Apify says the account is out of credit for this month.',
+            $status === 402, str_contains(strtolower((string) $message), 'usage hard limit'), str_contains(strtolower((string) $message), 'not enough usage')
+                => "Apify's monthly spending limit is used up, so no new searches can start. Raise the limit or upgrade the plan at console.apify.com → Billing. Leads you already have are not affected.",
             filled($message) => "Apify error: {$message}",
             default => "Apify error (HTTP {$status}).",
         };

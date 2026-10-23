@@ -115,4 +115,17 @@ class LeadFinderTest extends TestCase
         $this->assertSame('Dallas, TX', \App\Services\Apify::location('Dallas, TX'));
         $this->assertSame('Tbilisi, Georgia, Europe', \App\Services\Apify::location('Tbilisi, Georgia, Europe'));
     }
+
+    public function test_apify_spending_limit_gets_a_plain_message(): void
+    {
+        config(['services.apify.token' => 'test-token']);
+        \Illuminate\Support\Facades\Http::fake(['*' => \Illuminate\Support\Facades\Http::response(['error' => ['type' => 'platform-feature-disabled', 'message' => 'Monthly usage hard limit exceeded']], 403)]);
+
+        try {
+            app(\App\Services\Apify::class)->startMapsSearch('Roofers', 'Dallas, TX', 10);
+            $this->fail('Expected an error.');
+        } catch (\RuntimeException $e) {
+            $this->assertStringContainsString('monthly spending limit is used up', $e->getMessage());
+        }
+    }
 }
