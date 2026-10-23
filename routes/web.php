@@ -4,6 +4,7 @@ use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CostsController;
+use App\Http\Controllers\CrmController;
 use App\Http\Controllers\DraftController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\ScreenController;
@@ -27,8 +28,17 @@ Route::middleware('guest')->group(function () {
     Route::post('/setup', [AuthController::class, 'setup'])->middleware('throttle:10,1');
 });
 
-// For the LaiQ Digital CRM's Profit page: monthly Apify + Claude costs. Needs the key from Settings → Costs.
-Route::get('/api/costs', [CostsController::class, 'show'])->middleware('throttle:60,1')->name('api.costs');
+// The LaiQ Digital CRM's connection (costs for its Profit page, cold-call lists). Needs the key from Settings → CRM connection.
+Route::middleware(['crm.key', 'throttle:120,1'])->prefix('/api')->group(function () {
+    Route::get('/costs', [CostsController::class, 'show'])->name('api.costs');
+    // Cold-call lists: the CRM sends its rows to be audited and reads back Starter / Growth / Scale,
+    // pulls hot leads Cloyne found, and sends call results back. See App\Http\Controllers\CrmController.
+    Route::post('/crm/leads', [CrmController::class, 'importLeads'])->name('api.crm.import');
+    Route::get('/crm/leads', [CrmController::class, 'leads'])->name('api.crm.leads');
+    Route::get('/crm/call-list', [CrmController::class, 'callList'])->name('api.crm.call-list');
+    Route::post('/crm/call-list/added', [CrmController::class, 'callListAdded'])->name('api.crm.call-list.added');
+    Route::post('/crm/calls', [CrmController::class, 'calls'])->name('api.crm.calls');
+});
 
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');

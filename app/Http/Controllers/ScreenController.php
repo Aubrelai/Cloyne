@@ -266,6 +266,11 @@ class ScreenController extends Controller
             ],
             'costs' => \App\Models\ApiCost::monthTotals(now()),
             'costsKey' => CostsController::hasKey(),
+            'crmStats' => [
+                'linked' => Business::whereNotNull('crm_id')->count(),
+                'audited' => Business::whereNotNull('crm_id')->whereNotNull('score')->count(),
+                'calls' => \App\Models\Call::count(),
+            ],
             'outreachCustom' => \App\Models\Setting::isSet('tone') || \App\Models\Setting::isSet('booking_url'),
             'team' => User::orderByRaw("case role when 'owner' then 0 when 'reviewer' then 1 else 2 end")->orderBy('name')->get(),
         ]);

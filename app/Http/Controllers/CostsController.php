@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Middleware\RequireCrmKey;
 use App\Models\ApiCost;
 use App\Models\Setting;
 use Illuminate\Http\JsonResponse;
@@ -17,17 +18,11 @@ use Illuminate\Support\Str;
  */
 class CostsController extends Controller
 {
-    private const KEY_SETTING = 'costs_key_hash';
+    private const KEY_SETTING = RequireCrmKey::SETTING;
 
+    /** Needs the CRM key (crm.key middleware). */
     public function show(Request $request): JsonResponse
     {
-        $hash = Setting::find(self::KEY_SETTING)?->value;
-        $given = (string) ($request->bearerToken() ?: $request->header('X-Cloyne-Key'));
-
-        if (! $hash || $given === '' || ! hash_equals(json_decode($hash, true), hash('sha256', $given))) {
-            return response()->json(['error' => 'Wrong or missing key. Make one in Cloyne → Settings → Costs.'], 401);
-        }
-
         $month = (string) $request->query('month', now()->format('Y-m'));
         if (! preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $month)) {
             return response()->json(['error' => 'month must look like 2026-10.'], 422);
@@ -46,7 +41,7 @@ class CostsController extends Controller
         $key = 'cloyne_'.Str::random(40);
         Setting::put(self::KEY_SETTING, hash('sha256', $key));
 
-        return redirect()->to(route('settings').'#costs')
+        return redirect()->to(route('settings').'#crm')
             ->with('costs_key', $key)
             ->with('status', 'New CRM key made. Copy it now; Cloyne won’t show it again.');
     }
@@ -55,7 +50,7 @@ class CostsController extends Controller
     {
         Setting::forget(self::KEY_SETTING);
 
-        return redirect()->to(route('settings').'#costs')->with('status', 'CRM key turned off. The CRM can’t read costs until you make a new one.');
+        return redirect()->to(route('settings').'#crm')->with('status', 'CRM key turned off. The CRM can’t read costs until you make a new one.');
     }
 
     public static function hasKey(): bool

@@ -31,6 +31,7 @@ class Business extends Model
         'Asked not to be contacted',
         'Closed or moved',
         'Duplicate',
+        'Not interested',
     ];
 
     /** Websites many businesses share, so they never mean "same business" or "chain". */
@@ -69,6 +70,11 @@ class Business extends Model
         return $this->hasMany(Contact::class);
     }
 
+    public function calls(): HasMany
+    {
+        return $this->hasMany(Call::class)->latest('called_at');
+    }
+
     public function audits(): HasMany
     {
         return $this->hasMany(Audit::class);
@@ -103,7 +109,9 @@ class Business extends Model
             ->whereIn('stage', ['audited', 'draft_ready', 'new'])
             ->whereHas('contacts', fn ($c) => $c->whereNotNull('email'))
             ->where(fn ($q) => $q->whereIn('package', $selling)->orWhereIn('pitch_package', $selling))
-            ->whereDoesntHave('drafts', fn ($d) => $d->whereIn('status', Draft::ACTIVE));
+            ->whereDoesntHave('drafts', fn ($d) => $d->whereIn('status', Draft::ACTIVE))
+            // Leads on the CRM's cold-call lists are the callers' to work, so Cloyne doesn't email them too.
+            ->whereNull('crm_id');
     }
 
     public function latestAudit(): HasOne

@@ -47,8 +47,8 @@
             <x-pill tone="neutral">Step 5</x-pill>
         </div>
         <div class="split connection-row" style="border-bottom: 0">
-            <div><strong>LaiQ Digital CRM</strong><div class="caption">Booked calls go here; deal stages come back</div></div>
-            <x-pill tone="neutral">Step 7</x-pill>
+            <div><strong>LaiQ Digital CRM</strong><div class="caption">Cold-call lists, call results and costs · see CRM connection below</div></div>
+            @if ($costsKey)<x-pill tone="success">Key made</x-pill>@else<x-pill tone="neutral">No key yet</x-pill>@endif
         </div>
     </section>
 
@@ -64,11 +64,18 @@
             @endforeach
         </div>
 
-        <div class="split connection-row" style="border-bottom: 0; margin-top: var(--space-3)">
+    </section>
+
+    <section class="card" id="crm">
+        <div class="card__head">
+            <h2 class="card__title">CRM connection</h2>
+            <span class="caption">{{ number_format($crmStats['linked']) }} {{ Str::plural('lead', $crmStats['linked']) }} on CRM call lists · {{ number_format($crmStats['audited']) }} audited · {{ number_format($crmStats['calls']) }} {{ Str::plural('call', $crmStats['calls']) }} logged</span>
+        </div>
+        <div class="split connection-row" style="border-bottom: 0">
             <div>
-                <strong>Send to the LaiQ Digital CRM</strong>
-                <div class="caption">The CRM's Profit page reads these totals as shared costs, using a private key.</div>
-                <div class="caption mono" style="margin-top: 2px">{{ route('api.costs') }}</div>
+                <strong>Key for the CRM</strong>
+                <div class="caption">One private key lets the CRM send its cold-call lists for audits, read back Starter / Growth / Scale, pull new hot leads, send call results, and read these costs.</div>
+                <div class="caption mono" style="margin-top: 2px">{{ url('/api') }}</div>
             </div>
             <div class="btn-row" style="align-items: center">
                 @if ($costsKey)
@@ -77,12 +84,12 @@
                     <x-pill tone="neutral">No key yet</x-pill>
                 @endif
                 @can('manage-team')
-                    <form method="post" action="{{ route('settings.costs-key') }}" @if ($costsKey) data-confirm="Make a new key? The CRM stops working until you paste the new key into it." data-confirm-button="Make new key" @endif>
+                    <form method="post" action="{{ route('settings.costs-key') }}" @if ($costsKey) data-confirm="Make a new key? The CRM stops syncing until you paste the new key into it." data-confirm-button="Make new key" @endif>
                         @csrf
                         <button type="submit" class="btn btn--ghost btn--sm">{{ $costsKey ? 'Make new key' : 'Make key' }}</button>
                     </form>
                     @if ($costsKey)
-                        <form method="post" action="{{ route('settings.costs-key.revoke') }}" data-confirm="Turn off the CRM key? The CRM won't be able to read costs." data-confirm-button="Turn off">
+                        <form method="post" action="{{ route('settings.costs-key.revoke') }}" data-confirm="Turn off the CRM key? The CRM stops syncing with Cloyne." data-confirm-button="Turn off">
                             @csrf @method('DELETE')
                             <button type="submit" class="btn btn--ghost btn--sm">Turn off</button>
                         </form>

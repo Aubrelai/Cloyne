@@ -72,7 +72,27 @@
             <dt>License</dt><dd class="mono">{{ collect([$lead->license_number, $lead->license_status, $lead->license_expires_on ? 'exp. ' . $lead->license_expires_on->format('M Y') : null])->filter()->implode(' · ') ?: '—' }}</dd>
             <dt>Reviews</dt><dd>{{ $lead->rating ? $lead->rating . ' stars · ' . number_format($lead->review_count) . ' on Google' : '—' }}</dd>
             <dt>Added</dt><dd><x-time :at="$lead->created_at" />{{ $lead->search ? ' · ' . $lead->search->label() : '' }}</dd>
+            @if ($lead->crm_id)
+                <dt>CRM</dt><dd>On the call list{{ $lead->crm_list ? ' "' . $lead->crm_list . '"' : '' }} · <span class="mono">#{{ $lead->crm_id }}</span><div class="caption">The team calls this lead from the CRM, so Cloyne won't email it.</div></dd>
+            @endif
         </dl>
+
+        @php $calls = $lead->calls()->limit(10)->get(); @endphp
+        @if ($calls->isNotEmpty())
+            <h3 class="profile__subhead">Calls <span class="caption">from the CRM</span></h3>
+            <ul class="call-list">
+                @foreach ($calls as $call)
+                    <li>
+                        <div class="split">
+                            <x-pill :tone="match ($call->outcome) { 'booked' => 'success', 'not_interested', 'wrong_number' => 'warning', default => 'neutral' }">{{ $call->outcomeLabel() }}</x-pill>
+                            <span class="caption"><x-time :at="$call->called_at" />{{ $call->caller ? ' · ' . $call->caller : '' }}</span>
+                        </div>
+                        @if ($call->call_back_on)<div class="caption">Call back {{ $call->call_back_on->format('M j') }}</div>@endif
+                        @if ($call->notes)<div class="call-list__notes">{{ $call->notes }}</div>@endif
+                    </li>
+                @endforeach
+            </ul>
+        @endif
     </div>
 
     @if ($lead->package)

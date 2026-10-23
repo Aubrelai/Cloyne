@@ -12,7 +12,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->alias(['fresh-password' => \App\Http\Middleware\RequireFreshPassword::class]);
+        $middleware->alias([
+            'fresh-password' => \App\Http\Middleware\RequireFreshPassword::class,
+            'crm.key' => \App\Http\Middleware\RequireCrmKey::class,
+        ]);
+        // The CRM calls /api/* with its key, not a browser session, so no CSRF token there.
+        $middleware->validateCsrfTokens(except: ['api/*']);
         $middleware->redirectGuestsTo(fn () => route('login'));
         $middleware->redirectUsersTo(fn () => route('dashboard'));
     })
