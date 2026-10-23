@@ -270,4 +270,14 @@ class ScreenController extends Controller
             'team' => User::orderByRaw("case role when 'owner' then 0 when 'reviewer' then 1 else 2 end")->orderBy('name')->get(),
         ]);
     }
+
+    /** What's new: every Cloyne version, newest first. */
+    public function versions(): View
+    {
+        $versions = collect(config('versions', []))
+            ->sort(fn ($a, $b) => version_compare($b['version'], $a['version']))
+            ->values();
+
+        return view('screens.versions', ['versions' => $versions]);
+    }
 }

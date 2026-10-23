@@ -49,6 +49,7 @@ Route::middleware(['auth', 'fresh-password'])->group(function () {
         Route::get('/inbox', 'inbox')->name('inbox');
         Route::get('/booked', 'booked')->name('booked');
         Route::get('/settings', 'settings')->name('settings');
+        Route::get('/versions', 'versions')->name('versions');
     });
 
     // Saved views are personal, so every role can save their own.

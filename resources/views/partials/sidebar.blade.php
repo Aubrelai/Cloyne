@@ -10,7 +10,13 @@
     ];
 @endphp
 <nav class="nav" aria-label="Main">
-    <a href="{{ route('dashboard') }}" class="nav__brand">Cloyne</a>
+    @php $latest = collect(config('versions', []))->sort(fn ($a, $b) => version_compare($b['version'], $a['version']))->first(); @endphp
+    <div class="nav__brand-wrap">
+        <a href="{{ route('dashboard') }}" class="nav__brand">Cloyne</a>
+        @if ($latest)
+            <a href="{{ route('versions') }}" class="nav__version" title="What's new in {{ $latest['version'] }}: {{ $latest['title'] }}">v{{ $latest['version'] }} · {{ \Illuminate\Support\Carbon::parse($latest['date'])->format('M j') }}</a>
+        @endif
+    </div>
 
     @foreach ($items as $item)
         @php $active = request()->routeIs($item['route']); @endphp
