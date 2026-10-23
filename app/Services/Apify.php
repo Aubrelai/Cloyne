@@ -18,6 +18,26 @@ class Apify
         return filled(config('services.apify.token'));
     }
 
+    private const US_STATES = [
+        'alabama', 'alaska', 'arizona', 'arkansas', 'california', 'colorado', 'connecticut', 'delaware', 'florida', 'georgia',
+        'hawaii', 'idaho', 'illinois', 'indiana', 'iowa', 'kansas', 'kentucky', 'louisiana', 'maine', 'maryland',
+        'massachusetts', 'michigan', 'minnesota', 'mississippi', 'missouri', 'montana', 'nebraska', 'nevada', 'new hampshire', 'new jersey',
+        'new mexico', 'new york', 'north carolina', 'north dakota', 'ohio', 'oklahoma', 'oregon', 'pennsylvania', 'rhode island', 'south carolina',
+        'south dakota', 'tennessee', 'texas', 'utah', 'vermont', 'virginia', 'washington', 'west virginia', 'wisconsin', 'wyoming',
+    ];
+
+    /**
+     * Google reads "georgia" as the country, so an area that ends in a US state name gets ", USA" added.
+     * "Atlanta, Georgia" -> "Atlanta, Georgia, USA". Areas that name another country are left alone.
+     */
+    public static function location(string $area): string
+    {
+        $area = trim($area);
+        $last = strtolower(trim((string) collect(explode(',', $area))->last()));
+
+        return in_array($last, self::US_STATES, true) ? $area.', USA' : $area;
+    }
+
     /**
      * Start a Google Maps search in the background.
      *
@@ -31,7 +51,7 @@ class Apify
             ->withQueryParameters(['maxItems' => $maxResults])
             ->post("/acts/{$actor}/runs", [
                 'searchStringsArray' => [$category],
-                'locationQuery' => $area,
+                'locationQuery' => self::location($area),
                 'maxCrawledPlacesPerSearch' => $maxResults,
                 'language' => 'en',
                 'skipClosedPlaces' => true,

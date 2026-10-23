@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap">
-<link rel="stylesheet" href="{{ asset('css/cloyne.css') }}?v=4">
+<link rel="stylesheet" href="{{ asset('css/cloyne.css') }}?v={{ @filemtime(public_path('css/cloyne.css')) }}">
 @if ($theme === 'system')
     <script>document.documentElement.dataset.theme = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';</script>
 @endif
-<script src="{{ asset('js/cloyne.js') }}?v=4" defer></script>
+<script src="{{ asset('js/cloyne.js') }}?v={{ @filemtime(public_path('js/cloyne.js')) }}" defer></script>

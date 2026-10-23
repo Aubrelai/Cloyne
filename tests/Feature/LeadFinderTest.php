@@ -107,4 +107,12 @@ class LeadFinderTest extends TestCase
         Http::assertNothingSent();
         $this->assertSame(0, Search::count());
     }
+
+    public function test_us_state_names_are_not_read_as_countries(): void
+    {
+        $this->assertSame('georgia, USA', \App\Services\Apify::location(' georgia'));
+        $this->assertSame('Atlanta, Georgia, USA', \App\Services\Apify::location('Atlanta, Georgia'));
+        $this->assertSame('Dallas, TX', \App\Services\Apify::location('Dallas, TX'));
+        $this->assertSame('Tbilisi, Georgia, Europe', \App\Services\Apify::location('Tbilisi, Georgia, Europe'));
+    }
 }

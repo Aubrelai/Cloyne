@@ -82,7 +82,7 @@
                 @push('scripts')
                     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
                     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" defer></script>
-                    <script src="{{ asset('js/lead-map.js') }}?v=1" defer></script>
+                    <script src="{{ asset('js/lead-map.js') }}?v={{ @filemtime(public_path('js/lead-map.js')) }}" defer></script>
                 @endpush
             @endif
         </section>
