@@ -3,6 +3,7 @@
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CostsController;
 use App\Http\Controllers\DraftController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\ScreenController;
@@ -25,6 +26,9 @@ Route::middleware('guest')->group(function () {
     Route::get('/setup', [AuthController::class, 'showSetup'])->name('setup');
     Route::post('/setup', [AuthController::class, 'setup'])->middleware('throttle:10,1');
 });
+
+// For the LaiQ Digital CRM's Profit page: monthly Apify + Claude costs. Needs the key from Settings → Costs.
+Route::get('/api/costs', [CostsController::class, 'show'])->middleware('throttle:60,1')->name('api.costs');
 
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
@@ -84,6 +88,8 @@ Route::middleware(['auth', 'fresh-password'])->group(function () {
         Route::delete('/outreach', [SettingsController::class, 'resetOutreach'])->name('settings.outreach.reset');
         Route::put('/selling', [SettingsController::class, 'updateSelling'])->name('settings.selling');
         Route::post('/test/{service}', [SettingsController::class, 'test'])->whereIn('service', ['apify', 'claude'])->name('settings.test');
+        Route::post('/costs-key', [CostsController::class, 'createKey'])->name('settings.costs-key');
+        Route::delete('/costs-key', [CostsController::class, 'revokeKey'])->name('settings.costs-key.revoke');
     });
 
     Route::middleware('can:manage-team')->prefix('/settings/team')->name('team.')->group(function () {

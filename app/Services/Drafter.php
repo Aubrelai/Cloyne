@@ -45,6 +45,7 @@ class Drafter
             system: $this->systemPrompt(),
             userMessage: $message,
             tool: $this->tool(),
+            purpose: 'draft',
             maxTokens: 1200,
         );
 

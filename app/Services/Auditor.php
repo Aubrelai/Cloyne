@@ -29,6 +29,7 @@ class Auditor
             system: $this->systemPrompt(),
             userMessage: $this->businessBrief($business, $signals),
             tool: $this->tool(),
+            purpose: 'audit',
         );
 
         $packages = array_keys(Business::packages());

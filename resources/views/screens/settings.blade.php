@@ -52,6 +52,55 @@
         </div>
     </section>
 
+    <section class="card" id="costs">
+        <div class="card__head">
+            <h2 class="card__title">Costs this month</h2>
+            <span class="caption">Estimates: Apify from businesses found, Claude from the words it read and wrote. Your bills at console.apify.com and the Claude Console are exact.</span>
+        </div>
+        <div class="stats stats--3">
+            <x-stat label="Total" :value="'$' . number_format($costs['total'], 2)" />
+            @foreach ($costs['items'] as $item)
+                <x-stat :label="$item['name']" :value="'$' . number_format($item['amount'], 2)" :delta="$item['note']" />
+            @endforeach
+        </div>
+
+        <div class="split connection-row" style="border-bottom: 0; margin-top: var(--space-3)">
+            <div>
+                <strong>Send to the LaiQ Digital CRM</strong>
+                <div class="caption">The CRM's Profit page reads these totals as shared costs, using a private key.</div>
+                <div class="caption mono" style="margin-top: 2px">{{ route('api.costs') }}</div>
+            </div>
+            <div class="btn-row" style="align-items: center">
+                @if ($costsKey)
+                    <x-pill tone="success">Key made</x-pill>
+                @else
+                    <x-pill tone="neutral">No key yet</x-pill>
+                @endif
+                @can('manage-team')
+                    <form method="post" action="{{ route('settings.costs-key') }}" @if ($costsKey) data-confirm="Make a new key? The CRM stops working until you paste the new key into it." data-confirm-button="Make new key" @endif>
+                        @csrf
+                        <button type="submit" class="btn btn--ghost btn--sm">{{ $costsKey ? 'Make new key' : 'Make key' }}</button>
+                    </form>
+                    @if ($costsKey)
+                        <form method="post" action="{{ route('settings.costs-key.revoke') }}" data-confirm="Turn off the CRM key? The CRM won't be able to read costs." data-confirm-button="Turn off">
+                            @csrf @method('DELETE')
+                            <button type="submit" class="btn btn--ghost btn--sm">Turn off</button>
+                        </form>
+                    @endif
+                @endcan
+            </div>
+        </div>
+        @if (session('costs_key'))
+            <div class="key-once" role="status">
+                <div class="caption">Your CRM key. Copy it now; Cloyne won't show it again. Keep it out of chats and GitHub.</div>
+                <div class="split" style="margin-top: var(--space-2)">
+                    <span class="mono key-once__value">{{ session('costs_key') }}</span>
+                    <x-copy :value="session('costs_key')" label="CRM key" />
+                </div>
+            </div>
+        @endif
+    </section>
+
     <section class="card">
         <div class="card__head">
             <h2 class="card__title">LaiQ packages</h2>

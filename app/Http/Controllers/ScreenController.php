@@ -264,6 +264,8 @@ class ScreenController extends Controller
                 'drafts' => Draft::where('created_at', '>=', now()->startOfMonth())->whereNotNull('body')->count(),
                 'apifyCost' => (int) Search::where('created_at', '>=', now()->startOfMonth())->sum('found') * (float) config('services.apify.price_per_1000', 4) / 1000,
             ],
+            'costs' => \App\Models\ApiCost::monthTotals(now()),
+            'costsKey' => CostsController::hasKey(),
             'outreachCustom' => \App\Models\Setting::isSet('tone') || \App\Models\Setting::isSet('booking_url'),
             'team' => User::orderByRaw("case role when 'owner' then 0 when 'reviewer' then 1 else 2 end")->orderBy('name')->get(),
         ]);

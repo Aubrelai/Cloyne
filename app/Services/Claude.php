@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\ApiCost;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
@@ -42,7 +43,7 @@ class Claude
      *
      * @param  array<string, mixed>  $tool  {name, description, input_schema}
      */
-    public function callTool(string $model, string $system, string $userMessage, array $tool, int $maxTokens = 2000): array
+    public function callTool(string $model, string $system, string $userMessage, array $tool, int $maxTokens = 2000, string $purpose = 'other'): array
     {
         if (! self::isConfigured()) {
             throw new RuntimeException('Claude API key missing. Add ANTHROPIC_API_KEY to your .env file.');
@@ -76,6 +77,8 @@ class Claude
                 default => 'Claude API error (HTTP ' . $response->status() . ')' . ($message ? ": {$message}" : ''),
             });
         }
+
+        ApiCost::recordClaude($model, (array) $response->json('usage', []), $purpose);
 
         foreach ($response->json('content', []) as $block) {
             if (($block['type'] ?? null) === 'tool_use' && ($block['name'] ?? null) === $tool['name']) {
