@@ -145,7 +145,7 @@ step "8/8  Finishing up"
 "$PHP" artisan optimize
 "$PHP" artisan queue:restart >/dev/null || true
 
-if [ "$FIRST_RUN" = "1" ]; then
+if ! "$PHP" artisan cloyne:owner --check >/dev/null 2>&1; then
     echo
     echo "Create the Owner account now, so nobody else can claim it."
     read -rp "Owner email: " OWNER_EMAIL

@@ -179,6 +179,13 @@ class AuthTest extends TestCase
         $this->assertNull($sam->fresh());
     }
 
+    public function test_owner_check_reports_whether_an_owner_exists(): void
+    {
+        $this->artisan('cloyne:owner', ['--check' => true])->assertFailed();
+        User::factory()->create(['role' => 'owner']);
+        $this->artisan('cloyne:owner', ['--check' => true])->assertSuccessful();
+    }
+
     public function test_create_owner_command(): void
     {
         $this->artisan('cloyne:owner', ['email' => 'boss@laiq.example', '--name' => 'Boss'])->assertSuccessful();

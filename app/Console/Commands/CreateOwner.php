@@ -12,13 +12,17 @@ use Illuminate\Support\Facades\DB;
  */
 class CreateOwner extends Command
 {
-    protected $signature = 'cloyne:owner {email : Email for the Owner account} {--name= : Name, for a new account}';
+    protected $signature = 'cloyne:owner {email? : Email for the Owner account} {--name= : Name, for a new account} {--check : Only check whether an Owner exists (exit 0 if yes, 1 if not)}';
 
     protected $description = 'Create an Owner account, or reset an existing account to Owner with a new temporary password';
 
     public function handle(): int
     {
-        $email = strtolower(trim($this->argument('email')));
+        if ($this->option('check')) {
+            return User::where('role', 'owner')->exists() ? self::SUCCESS : self::FAILURE;
+        }
+
+        $email = strtolower(trim((string) $this->argument('email')));
 
         if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $this->error('That isn’t a valid email.');
