@@ -5,6 +5,8 @@
 #   git clone https://github.com/Aubrelai/Cloyne.git ~/cloyne-app && bash ~/cloyne-app/deploy/dreamhost.sh
 # Every update after that:
 #   bash ~/cloyne-app/deploy/dreamhost.sh
+# Uploaded the files yourself (FileZilla)? Put them in ~/cloyne-app (NOT the
+# website folder), then run the update command above.
 # Change the database password or add API keys later:
 #   bash ~/cloyne-app/deploy/dreamhost.sh settings
 #
@@ -64,6 +66,8 @@ fi
 step "2/8  Getting the latest code from GitHub"
 if [ -d "$APP_DIR/.git" ]; then
     git -C "$APP_DIR" pull --ff-only
+elif [ -f "$APP_DIR/artisan" ]; then
+    echo "Using the files uploaded to $APP_DIR (FileZilla). Upload new files there to update."
 else
     git clone "$REPO" "$APP_DIR"
 fi
