@@ -13,6 +13,7 @@ return [
         'Call results from the CRM (no answer, booked, not interested…) show on each lead; booked leads count as booked, not-interested leads are excluded.',
         'Leads on CRM call lists are never cold-emailed by Cloyne.',
         'Settings → CRM connection holds the one key the CRM uses for all of this.',
+        'The CRM can check who has a Cloyne login, so "Open in Cloyne" only shows for them.',
     ]],
     ['version' => '1.3', 'date' => '2026-10-23', 'title' => 'Costs and versions', 'notes' => [
         'Settings shows what Apify and Claude cost this month.',

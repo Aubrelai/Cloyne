@@ -38,6 +38,7 @@ Route::middleware(['crm.key', 'throttle:120,1'])->prefix('/api')->group(function
     Route::get('/crm/call-list', [CrmController::class, 'callList'])->name('api.crm.call-list');
     Route::post('/crm/call-list/added', [CrmController::class, 'callListAdded'])->name('api.crm.call-list.added');
     Route::post('/crm/calls', [CrmController::class, 'calls'])->name('api.crm.calls');
+    Route::get('/crm/users', [CrmController::class, 'users'])->name('api.crm.users');
 });
 
 Route::middleware('auth')->group(function () {

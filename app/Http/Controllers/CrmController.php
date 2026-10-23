@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Jobs\AuditBusiness;
 use App\Models\Business;
 use App\Models\Call;
+use App\Models\User;
 use App\Services\Claude;
 use App\Support\Phone;
 use App\Support\WebAddress;
@@ -22,6 +23,7 @@ use Illuminate\Validation\Rule;
  *   GET  /api/crm/call-list        Hot leads Cloyne found that aren't in the CRM yet.
  *   POST /api/crm/call-list/added  CRM says which of those it added, with its own IDs.
  *   POST /api/crm/calls            CRM sends call results (no answer, booked, ...).
+ *   GET  /api/crm/users            Emails of everyone who can sign in to Cloyne.
  */
 class CrmController extends Controller
 {
@@ -227,6 +229,19 @@ class CrmController extends Controller
         });
 
         return response()->json(['saved' => $saved, 'unknown' => $unknown]);
+    }
+
+    /**
+     * Cloyne → CRM: the email of every active Cloyne login, so the CRM shows "Open in Cloyne" only to
+     * people who can sign in. Removed team members are deleted, so every user here is active.
+     * Emails only: no names, roles, passwords or anything else.
+     */
+    public function users(): JsonResponse
+    {
+        return response()->json([
+            'users' => User::orderBy('email')->pluck('email')
+                ->map(fn ($email) => ['email' => mb_strtolower($email)])->values(),
+        ]);
     }
 
     /** One lead as the CRM sees it. */

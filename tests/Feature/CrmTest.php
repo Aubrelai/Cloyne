@@ -108,4 +108,21 @@ class CrmTest extends TestCase
         $this->get('/leads?lead='.$hot->id)->assertOk()->assertSee('Calls')->assertSee('Tuesday 2pm')->assertSee('Booked');
         $this->get('/settings')->assertSee('CRM connection')->assertSee('1 lead on CRM call lists', false)->assertSee('3 calls logged', false);
     }
+
+    public function test_crm_reads_only_the_emails_of_cloyne_logins(): void
+    {
+        $this->getJson('/api/crm/users')->assertUnauthorized();
+        \App\Models\User::factory()->role('viewer')->create(['email' => 'Jay@LaiqDigital.com']);
+        $key = $this->key();
+
+        $response = $this->withToken($key)->getJson('/api/crm/users')->assertOk();
+        $users = $response->json('users');
+
+        $this->assertContains(['email' => 'jay@laiqdigital.com'], $users);
+        $this->assertCount(\App\Models\User::count(), $users);
+        foreach ($users as $user) {
+            $this->assertSame(['email'], array_keys($user));
+        }
+        $this->assertStringNotContainsString('password', $response->getContent());
+    }
 }
