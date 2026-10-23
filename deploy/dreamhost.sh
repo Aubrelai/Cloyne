@@ -35,7 +35,9 @@ trap 'fail "Something went wrong (line $LINENO)."' ERR
 # ---------------------------------------------------------------------------
 step "1/8  Finding PHP 8.3 or newer"
 PHP=""
-for candidate in /usr/local/php85/bin/php /usr/local/php84/bin/php /usr/local/php83/bin/php "$(command -v php || true)"; do
+# Lowest version first: packages installed for PHP 8.3 also run on 8.4/8.5, but not the other way
+# round, so the command line must never be newer than the website's PHP (set in the DreamHost panel).
+for candidate in /usr/local/php83/bin/php /usr/local/php84/bin/php /usr/local/php85/bin/php "$(command -v php || true)"; do
     [ -n "$candidate" ] && [ -x "$candidate" ] || continue
     if "$candidate" -r 'exit(version_compare(PHP_VERSION, "8.3.0", ">=") ? 0 : 1);' 2>/dev/null; then
         PHP="$candidate"
