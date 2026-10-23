@@ -67,5 +67,6 @@
 
 @include('partials.toasts')
 @include('partials.dialogs')
+@stack('scripts')
 </body>
 </html>

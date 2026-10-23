@@ -66,18 +66,25 @@
             <div class="card__head">
                 <h2 class="card__title">Lead map</h2>
                 <div class="legend">
-                    <span><i class="dot" style="background: var(--brand)"></i>Hot, {{ $hotScore }}+</span>
-                    <span><i class="dot" style="background: var(--signal)"></i>Other leads</span>
+                    <button type="button" class="legend__toggle" data-lead-map-toggle="hot" aria-pressed="true"><i class="dot" style="background: var(--brand)"></i>Hot, {{ $hotScore }}+ <span class="mono">{{ $dots->where('hot', true)->count() }}</span></button>
+                    <button type="button" class="legend__toggle" data-lead-map-toggle="other" aria-pressed="true"><i class="dot" style="background: var(--signal)"></i>Other leads <span class="mono">{{ $dots->where('hot', false)->count() }}</span></button>
                 </div>
             </div>
-            <div class="map" aria-label="Map of {{ $dots->count() }} leads across the US. Click a dot to open the lead.">
-                @foreach ($dots as $d)
-                    <a href="{{ route('leads', ['lead' => $d['id']]) }}" @class(['map__dot', 'map__dot--hot' => $d['hot']]) style="left: {{ $d['x'] }}%; top: {{ $d['y'] }}%" title="{{ $d['label'] }}" aria-label="{{ $d['label'] }}"></a>
-                @endforeach
+            <div class="lead-map" data-lead-map data-lead-map-points='@json($dots)'
+                 aria-label="Map of {{ $dots->count() }} leads. Click a dot to see the lead.">
                 @if ($dots->isEmpty())
-                    <span class="map__label" style="left: 50%; top: 50%; transform: translate(-50%, -50%)">Leads appear here after your first search.</span>
+                    <span class="lead-map__empty">Leads appear here after your first search.</span>
+                @else
+                    <span class="lead-map__empty" data-lead-map-fallback>Loading the map…</span>
                 @endif
             </div>
+            @if ($dots->isNotEmpty())
+                @push('scripts')
+                    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+                    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" defer></script>
+                    <script src="{{ asset('js/lead-map.js') }}?v=1" defer></script>
+                @endpush
+            @endif
         </section>
 
         <div class="side-col" style="display: flex; flex-direction: column; gap: 16px">

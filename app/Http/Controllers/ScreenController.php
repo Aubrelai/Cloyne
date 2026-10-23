@@ -27,19 +27,22 @@ class ScreenController extends Controller
         $weekAgo = now()->subWeek();
         $hotScore = (int) config('cloyne.outreach.min_score', 60);
 
-        // US map: place leads with coordinates on a simple lat/lng box (max 1,500 dots).
+        // Lead map: newest 1,500 leads that have coordinates, anywhere. Drawn on a real map by public/js/lead-map.js.
         $dots = Business::query()
             ->whereNotNull('latitude')->whereNotNull('longitude')
-            ->whereBetween('latitude', [24, 50])->whereBetween('longitude', [-125, -66])
+            ->where('stage', '!=', 'excluded')
             ->latest()->limit(1500)
-            ->get(['id', 'name', 'latitude', 'longitude', 'score'])
+            ->get(['id', 'name', 'category', 'city', 'latitude', 'longitude', 'score'])
             ->map(fn ($b) => [
                 'id' => $b->id,
-                'label' => $b->displayName().(is_null($b->score) ? ' · not audited' : " · score {$b->score}"),
-                'x' => round(((float) $b->longitude + 125) / 59 * 100, 2),
-                'y' => round((50 - (float) $b->latitude) / 26 * 100, 2),
+                'name' => $b->displayName(),
+                'about' => collect([$b->category, $b->city])->filter()->implode(' · '),
+                'score' => $b->score,
+                'lat' => round((float) $b->latitude, 5),
+                'lng' => round((float) $b->longitude, 5),
                 'hot' => $b->score >= $hotScore,
-            ]);
+                'url' => route('leads', ['lead' => $b->id]),
+            ])->values();
 
         $withEmail = fn ($q) => $q->whereHas('contacts', fn ($c) => $c->whereNotNull('email'));
         $user = $request->user();
