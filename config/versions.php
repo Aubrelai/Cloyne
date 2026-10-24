@@ -7,6 +7,11 @@
 */
 
 return [
+    ['version' => '1.5', 'date' => '2026-10-24', 'title' => 'Choose what goes to the CRM', 'notes' => [
+        'Settings → CRM connection: set the minimum score for leads sent to the CRM call lists.',
+        'Tick packages (Starter, Growth, Scale) whose leads always go, whatever their score.',
+        'Shows how many leads are waiting for the CRM to pick up.',
+    ]],
     ['version' => '1.4', 'date' => '2026-10-23', 'title' => 'CRM cold-call lists', 'notes' => [
         'The CRM can send its cold-call lists to Cloyne; Cloyne audits every business and sends back Starter, Growth or Scale, the score and a talking point.',
         'New hot leads Cloyne finds can go straight onto the CRM call lists.',

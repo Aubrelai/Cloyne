@@ -125,4 +125,33 @@ class CrmTest extends TestCase
         }
         $this->assertStringNotContainsString('password', $response->getContent());
     }
+
+    public function test_owner_picks_which_leads_go_to_the_crm_by_score_and_package(): void
+    {
+        $key = $this->key();
+        $scale = Business::create(['name' => 'Big Plumbing', 'category' => 'Plumbers', 'phone' => '+17135550123']);
+        $this->audited($scale, 80, 'scale');
+        $starter = Business::create(['name' => 'Small Gym', 'category' => 'Gyms', 'phone' => '+17135550124']);
+        $this->audited($starter, 30, 'website');
+        $growth = Business::create(['name' => 'Mid Dental', 'category' => 'Dentists', 'phone' => '+17135550125']);
+        $this->audited($growth, 45, 'ads_crm');
+        Business::create(['name' => 'Not Audited Spa', 'category' => 'Spas', 'phone' => '+17135550126']);
+
+        $names = fn () => collect($this->withToken($key)->getJson('/api/crm/call-list')->json('leads'))->pluck('name')->all();
+        $this->assertSame(['Big Plumbing'], $names()); // default: 60+
+
+        $this->put('/settings/crm', ['crm_min_score' => 40])->assertRedirect();
+        $this->assertSame(['Big Plumbing', 'Mid Dental'], $names());
+
+        $this->put('/settings/crm', ['crm_min_score' => 90, 'crm_always_packages' => ['website']])
+            ->assertSessionHas('status', fn ($s) => str_contains($s, 'plus every Starter lead') && str_contains($s, '1 lead waiting'));
+        $this->assertSame(['Small Gym'], $names());
+        $this->get('/settings')->assertSee('Which leads go to the CRM call lists')->assertSee('1 lead waiting', false);
+
+        $this->put('/settings/crm', ['crm_min_score' => 500])->assertSessionHasErrors('crm_min_score', null, 'crm');
+        $this->put('/settings/crm', ['crm_min_score' => 50, 'crm_always_packages' => ['made_up']])->assertSessionHasErrors('crm_always_packages.0', null, 'crm');
+
+        $this->actingAs(\App\Models\User::factory()->role('reviewer')->create());
+        $this->put('/settings/crm', ['crm_min_score' => 10])->assertForbidden();
+    }
 }

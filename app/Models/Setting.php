@@ -29,6 +29,8 @@ class Setting extends Model
         'min_score' => 'cloyne.outreach.min_score',
         'max_words' => 'cloyne.outreach.max_words',
         'monthly_budget' => 'cloyne.monthly_budget',
+        'crm_min_score' => 'cloyne.crm.min_score',
+        'crm_always_packages' => 'cloyne.crm.always_packages',
     ];
 
     public static function put(string $key, mixed $value): void

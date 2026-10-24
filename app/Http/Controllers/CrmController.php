@@ -20,7 +20,7 @@ use Illuminate\Validation\Rule;
  *
  *   POST /api/crm/leads            CRM sends its cold-call list rows; Cloyne audits them.
  *   GET  /api/crm/leads            CRM reads back score + package (Starter / Growth / Scale) for its rows.
- *   GET  /api/crm/call-list        Hot leads Cloyne found that aren't in the CRM yet.
+ *   GET  /api/crm/call-list        Leads Cloyne found that pass the CRM rules (Settings) and aren't in the CRM yet.
  *   POST /api/crm/call-list/added  CRM says which of those it added, with its own IDs.
  *   POST /api/crm/calls            CRM sends call results (no answer, booked, ...).
  *   GET  /api/crm/users            Emails of everyone who can sign in to Cloyne.
@@ -132,16 +132,13 @@ class CrmController extends Controller
         ]);
     }
 
-    /** Cloyne → CRM: hot leads with a phone number that the CRM doesn't have yet, best first. */
+    /** Cloyne → CRM: leads that pass Settings → CRM connection (score or package), with a phone, not in the CRM yet, best first. */
     public function callList(Request $request): JsonResponse
     {
         $request->validate(['limit' => ['nullable', 'integer', 'min:1', 'max:500']]);
         $limit = (int) $request->query('limit', 200);
 
-        $rows = Business::whereNull('crm_id')
-            ->whereNotNull('phone')
-            ->where('score', '>=', (int) config('cloyne.outreach.min_score', 60))
-            ->whereNotIn('stage', ['excluded', 'booked', 'emailed', 'replied'])
+        $rows = Business::forCrmCallList()
             ->with('latestAudit')
             ->orderByDesc('score')->orderByDesc('review_count')
             ->limit($limit)

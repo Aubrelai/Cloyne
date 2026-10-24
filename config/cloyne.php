@@ -145,6 +145,14 @@ return [
     | from these settings; a person approves every draft before anything sends.
     | Booking link and mailing address can be changed in .env.
     */
+    // Which audited leads (with a phone number) Cloyne offers to the LaiQ Digital CRM's call lists.
+    // A lead goes if its score is at least min_score, OR its best-fit package is in always_packages.
+    // The Owner changes both in Settings → CRM connection.
+    'crm' => [
+        'min_score' => (int) env('CLOYNE_CRM_MIN_SCORE', 60),
+        'always_packages' => array_filter(array_map('trim', explode(',', env('CLOYNE_CRM_ALWAYS', '')))),
+    ],
+
     'outreach' => [
         'sender_name' => env('CLOYNE_SENDER_NAME', 'Aubre’ Cyriaque'),
         'sender_title' => env('CLOYNE_SENDER_TITLE', 'CEO, LaiQ Digital'),

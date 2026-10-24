@@ -74,7 +74,7 @@
         <div class="split connection-row" style="border-bottom: 0">
             <div>
                 <strong>Key for the CRM</strong>
-                <div class="caption">One private key lets the CRM send its cold-call lists for audits, read back Starter / Growth / Scale, pull new hot leads, send call results, and read these costs.</div>
+                <div class="caption">One private key lets the CRM send its cold-call lists for audits, read back Starter / Growth / Scale, pull new leads, send call results, and read these costs.</div>
                 <div class="caption mono" style="margin-top: 2px">{{ url('/api') }}</div>
             </div>
             <div class="btn-row" style="align-items: center">
@@ -96,6 +96,41 @@
                     @endif
                 @endcan
             </div>
+        </div>
+        <div class="crm-rules">
+            <strong>Which leads go to the CRM call lists</strong>
+            <div class="caption">Audited leads with a phone number. A lead goes if it scores at least the minimum, or if its best fit is a package you tick. {{ number_format($crmStats['waiting']) }} {{ Str::plural('lead', $crmStats['waiting']) }} waiting for the CRM to pick up.</div>
+            @if ($errors->crm->any())
+                <div role="alert"><x-pill tone="danger">Not saved</x-pill> {{ $errors->crm->first() }}</div>
+            @endif
+            @php
+                $crmMin = (int) config('cloyne.crm.min_score', 60);
+                $crmAlways = (array) config('cloyne.crm.always_packages', []);
+            @endphp
+            @can('manage-team')
+                <form method="post" action="{{ route('settings.crm') }}" class="crm-rules__form">
+                    @csrf
+                    @method('PUT')
+                    <div class="field">
+                        <label for="crm_min_score" class="label">Minimum score</label>
+                        <input id="crm_min_score" name="crm_min_score" type="number" class="input" min="0" max="100" required value="{{ old('crm_min_score', $crmMin) }}">
+                    </div>
+                    <div class="field" role="group" aria-labelledby="crm-always-label">
+                        <span class="label" id="crm-always-label">Also send every lead whose best fit is</span>
+                        <div class="crm-rules__packages">
+                        @foreach (\App\Models\Business::packages() as $key => $pkg)
+                            <label class="check">
+                                <input type="checkbox" name="crm_always_packages[]" value="{{ $key }}" @checked(in_array($key, old('crm_always_packages', $crmAlways), true))>
+                                {{ $pkg['short'] ?? $pkg['name'] }}
+                            </label>
+                        @endforeach
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn--secondary btn--sm">Save</button>
+                </form>
+            @else
+                <div class="caption" style="margin-top: var(--space-2)">Score {{ $crmMin }}+{{ $crmAlways ? ', plus every ' . collect($crmAlways)->map(fn ($k) => \App\Models\Business::packages()[$k]['short'] ?? $k)->implode(', ') . ' lead' : '' }}. Only the Owner can change this.</div>
+            @endcan
         </div>
         @if (session('costs_key'))
             <div class="key-once" role="status">

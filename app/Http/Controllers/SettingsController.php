@@ -72,6 +72,27 @@ class SettingsController extends Controller
             : 'All packages paused. Cloyne still shows each lead\'s best fit but pitches nothing.');
     }
 
+    /** Which leads go to the CRM's call lists: a minimum score, plus packages that always go. */
+    public function updateCrm(Request $request): RedirectResponse
+    {
+        $data = $request->validateWithBag('crm', [
+            'crm_min_score' => ['required', 'integer', 'min:0', 'max:100'],
+            'crm_always_packages' => ['nullable', 'array'],
+            'crm_always_packages.*' => [Rule::in(array_keys(Business::packages()))],
+        ]);
+        $always = array_values(array_intersect(array_keys(Business::packages()), $data['crm_always_packages'] ?? []));
+
+        Setting::put('crm_min_score', (int) $data['crm_min_score']);
+        Setting::put('crm_always_packages', $always);
+
+        $waiting = Business::forCrmCallList()->count();
+
+        return redirect()->to(route('settings').'#crm')->with('status',
+            'CRM call lists get leads scoring '.$data['crm_min_score'].'+'
+            .($always ? ', plus every '.collect($always)->map(fn ($k) => Business::packages()[$k]['short'] ?? $k)->implode(', ').' lead' : '')
+            .'. '.number_format($waiting).' '.str('lead')->plural($waiting).' waiting for the CRM to pick up.');
+    }
+
     public function test(string $service, Apify $apify, Claude $claude): RedirectResponse
     {
         try {

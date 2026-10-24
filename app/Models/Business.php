@@ -100,6 +100,24 @@ class Business extends Model
      * Leads that should get a first email: hot, has an email, has a package
      * LaiQ is selling, not excluded/contacted, and no draft already in play.
      */
+    /**
+     * Audited leads with a phone that Cloyne offers to the CRM's call lists: score at least
+     * cloyne.crm.min_score, or best-fit package in cloyne.crm.always_packages. Not in the CRM yet.
+     */
+    public function scopeForCrmCallList(Builder $query): Builder
+    {
+        $minScore = (int) config('cloyne.crm.min_score', 60);
+        $always = array_values((array) config('cloyne.crm.always_packages', []));
+
+        return $query
+            ->whereNull('crm_id')
+            ->whereNotNull('phone')
+            ->whereNotNull('score')
+            ->whereNotIn('stage', ['excluded', 'booked', 'emailed', 'replied'])
+            ->where(fn ($q) => $q->where('score', '>=', $minScore)
+                ->when($always, fn ($q) => $q->orWhereIn('package', $always)));
+    }
+
     public function scopeDraftable(Builder $query): Builder
     {
         $selling = self::sellingNow();
