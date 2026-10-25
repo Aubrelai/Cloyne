@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Business;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use App\Services\LeadRemover;
 
 /** Deleting leads. Deleted Google places are remembered so searches don't re-add them. */
@@ -85,5 +86,41 @@ class LeadController extends Controller
         });
 
         return redirect()->route('leads')->with('status', "Deleted {$count} " . str('lead')->plural($count) . '.');
+    }
+
+    /** Download the leads matching the current Leads filters as a CSV file (opens in Excel or Google Sheets). */
+    public function export(Request $request): StreamedResponse
+    {
+        $filters = $request->only(Business::FILTERS);
+        $name = 'cloyne-leads-'.now()->format('Y-m-d').'.csv';
+
+        return response()->streamDownload(function () use ($filters) {
+            $out = fopen('php://output', 'w');
+            fwrite($out, "\xEF\xBB\xBF"); // so Excel reads accents and dashes correctly
+            fputcsv($out, ['Business', 'Category', 'Phone', 'Email', 'Website', 'City', 'State', 'Rating', 'Reviews',
+                'Score', 'Best fit', 'Pitch now', 'Talking point', 'Stage', 'CRM list', 'Added', 'Cloyne link']);
+
+            Business::query()->filtered($filters)->with(['primaryContact', 'latestAudit'])
+                ->orderByRaw('score is null')->orderByDesc('score')->orderBy('name')
+                ->chunk(500, function ($leads) use ($out) {
+                    foreach ($leads as $lead) {
+                        fputcsv($out, array_map([self::class, 'safeCell'], [
+                            $lead->displayName(), $lead->category, $lead->phoneDisplay(),
+                            $lead->primaryContact?->email, $lead->website, $lead->city, $lead->state,
+                            $lead->rating, $lead->review_count, $lead->score, $lead->packageShort(),
+                            $lead->pitchPackageShort(), $lead->latestAudit?->pitch, $lead->stageLabel(),
+                            $lead->crm_list, optional($lead->created_at)->format('Y-m-d'),
+                            route('leads', ['lead' => $lead->id]),
+                        ]));
+                    }
+                });
+            fclose($out);
+        }, $name, ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    /** Spreadsheets run cells that start with = + - @ as formulas; a leading apostrophe keeps them as text. */
+    public static function safeCell(mixed $value): mixed
+    {
+        return is_string($value) && $value !== '' && in_array($value[0], ['=', '+', '-', '@', "\t", "\r"], true) ? "'".$value : $value;
     }
 }

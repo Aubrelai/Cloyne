@@ -16,6 +16,9 @@
             @if ($queued > 0)
                 <span class="caption">{{ number_format($queued) }} auditing in the background</span>
             @endif
+            @can('edit')
+                <a href="{{ route('leads.export', array_filter($filters)) }}" class="btn btn--ghost">Export CSV</a>
+            @endcan
             @if (auth()->user()->cannot('edit'))
                 {{-- Viewers can't start audits. --}}
             @elseif ($claudeConnected && $unaudited > 0)
@@ -133,9 +136,23 @@
                 @endforeach
             </select>
         </div>
-        @if (! empty($filters['audited']))
-            <input type="hidden" name="audited" value="{{ $filters['audited'] }}">
-        @endif
+        <div class="field">
+            <label for="f-audited" class="label">Audit</label>
+            <select id="f-audited" name="audited" class="select">
+                <option value="">Any</option>
+                <option value="yes" @selected(($filters['audited'] ?? '') === 'yes')>Audited</option>
+                <option value="no" @selected(($filters['audited'] ?? '') === 'no')>Not audited</option>
+                <option value="failed" @selected(($filters['audited'] ?? '') === 'failed')>Failed</option>
+            </select>
+        </div>
+        <div class="field">
+            <label for="f-from" class="label">From</label>
+            <select id="f-from" name="from" class="select">
+                <option value="">Anywhere</option>
+                <option value="finder" @selected(($filters['from'] ?? '') === 'finder')>Lead Finder</option>
+                <option value="crm" @selected(($filters['from'] ?? '') === 'crm')>CRM call lists</option>
+            </select>
+        </div>
         <button type="submit" class="btn btn--secondary">Apply</button>
         @if (array_filter($filters))
             <a href="{{ route('leads', ['clear' => 1]) }}" class="btn btn--ghost">Clear</a>
@@ -218,6 +235,7 @@
                                 <td>
                                     <a href="{{ request()->fullUrlWithQuery(['lead' => $lead->id]) }}" class="table__name" style="color: var(--ink); text-decoration: none">{{ $lead->displayName() }}</a>
                                     @if ($lead->is_chain)<x-pill tone="warning">Chain</x-pill>@endif
+                                    @if ($lead->crm_id)<span title="On the CRM call list{{ $lead->crm_list ? ' "' . $lead->crm_list . '"' : '' }}"><x-pill tone="signal">CRM</x-pill></span>@endif
                                     <div class="caption">{{ collect([$lead->category, $lead->location()])->filter()->implode(' · ') }}</div>
                                 </td>
                                 <td class="nowrap">@if ($lead->rating)<span class="mono">{{ $lead->rating }}</span> <span class="star" aria-hidden="true">★</span> <span class="caption">{{ number_format($lead->review_count) }}</span>@else<span class="caption">—</span>@endif</td>
@@ -225,7 +243,7 @@
                                     @if ($lead->audit_status === 'queued')
                                         <x-pill tone="signal">Auditing</x-pill>
                                     @elseif ($lead->audit_status === 'failed' && is_null($lead->score))
-                                        <x-pill tone="danger">Failed</x-pill>
+                                        <span title="{{ $lead->audit_error }}"><x-pill tone="danger">Failed</x-pill></span>
                                     @elseif (is_null($lead->score))
                                         <span class="caption">Not audited</span>
                                     @else

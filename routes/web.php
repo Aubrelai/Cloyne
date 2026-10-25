@@ -76,6 +76,8 @@ Route::middleware(['auth', 'fresh-password'])->group(function () {
         Route::post('/lead-finder/searches/{search}/again', [SearchController::class, 'again'])->name('searches.again');
         Route::post('/leads/{business}/audit', [AuditController::class, 'one'])->name('audits.one');
         Route::post('/leads/audit', [AuditController::class, 'many'])->name('audits.many');
+        Route::post('/leads/audit-failed', [AuditController::class, 'retryFailed'])->name('audits.retry-failed');
+        Route::get('/leads/export', [LeadController::class, 'export'])->name('leads.export');
         Route::delete('/leads/{business}', [LeadController::class, 'destroy'])->name('leads.destroy');
         Route::post('/leads/delete', [LeadController::class, 'destroyMany'])->name('leads.destroy-many');
         Route::post('/leads/delete-matching', [LeadController::class, 'destroyMatching'])->name('leads.destroy-matching');

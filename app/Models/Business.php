@@ -293,7 +293,7 @@ class Business extends Model
     }
 
     /** Query-string filters the Leads page understands. */
-    public const FILTERS = ['q', 'search', 'category', 'package', 'pitchable', 'state', 'score', 'email', 'audited', 'stage', 'chain'];
+    public const FILTERS = ['q', 'search', 'category', 'package', 'pitchable', 'state', 'score', 'email', 'audited', 'stage', 'chain', 'from'];
 
     /** Apply the Leads page filters (used for the list and for "delete all matching"). */
     public function scopeFiltered(Builder $query, array $filters): void
@@ -316,11 +316,34 @@ class Business extends Model
                 'any' => $q->whereHas('contacts', fn ($c) => $c->whereNotNull('email')),
                 default => $q->whereHas('contacts', fn ($c) => $c->where('email_status', $status)),
             })
-            ->when($filters['audited'] ?? null, fn ($q, $audited) => $audited === 'no' ? $q->whereNull('score') : $q->whereNotNull('score'))
+            ->when($filters['audited'] ?? null, fn ($q, $audited) => match ($audited) {
+                'no' => $q->whereNull('score'),
+                'failed' => $q->whereNull('score')->where('audit_status', 'failed'),
+                default => $q->whereNotNull('score'),
+            })
+            ->when($filters['from'] ?? null, fn ($q, $from) => match ($from) {
+                'crm' => $q->whereNotNull('crm_id'),
+                'finder' => $q->whereNull('crm_id'),
+                default => null,
+            })
             ->when($filters['stage'] ?? null, fn ($q, $stage) => $q->where('stage', $stage))
             // Excluded leads stay out of the list unless you ask for them.
             ->when(($filters['stage'] ?? null) === null, fn ($q) => $q->where('stage', '!=', 'excluded'))
             ->when($filters['chain'] ?? null, fn ($q, $chain) => $q->where('is_chain', $chain === 'yes'));
+    }
+
+    /**
+     * Why audits failed, most common first: [['reason' => 'Claude rejected the API key…', 'count' => 236], …].
+     *
+     * @return list<array{reason: string, count: int}>
+     */
+    public static function auditFailureReasons(int $limit = 3): array
+    {
+        return static::whereNull('score')->where('audit_status', 'failed')
+            ->selectRaw('audit_error, count(*) as total')->groupBy('audit_error')
+            ->orderByDesc('total')->limit($limit)->get()
+            ->map(fn ($row) => ['reason' => (string) ($row->audit_error ?: 'Unknown error'), 'count' => (int) $row->total])
+            ->all();
     }
 
     /** Hot 60+, warm 40-59, cold under 40. */

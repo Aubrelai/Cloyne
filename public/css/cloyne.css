@@ -433,3 +433,6 @@ th[aria-sort="ascending"] .sort-link, th[aria-sort="descending"] .sort-link { co
 .crm-rules__form .input { width: 120px; }
 .crm-rules__packages { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); align-items: center; min-height: 40px; }
 .crm-rules__packages .check { display: inline-flex; align-items: center; gap: 6px; margin: 0; }
+.failed-audits { align-items: flex-start; }
+.failed-audits a { color: var(--ink); }
+.failed-audits__why { display: block; margin-top: 4px; }

@@ -27,7 +27,6 @@
             $pendingDrafts > 0 ? ['url' => route('review'), 'text' => number_format($pendingDrafts) . ' ' . Str::plural('email', $pendingDrafts) . ' waiting for review', 'action' => 'Review'] : null,
             $draftable > 0 && $claudeConnected ? ['url' => route('review'), 'text' => number_format($draftable) . ' hot ' . Str::plural('lead', $draftable) . ' with an email and no draft yet', 'action' => 'Write'] : null,
             $notAudited > 0 ? ['url' => route('leads', ['audited' => 'no']), 'text' => number_format($notAudited) . ' ' . Str::plural('lead', $notAudited) . ' not audited yet' . ($queued > 0 ? ' (' . number_format($queued) . ' in progress)' : ''), 'action' => 'Audit'] : null,
-            $failedAudits > 0 ? ['url' => route('leads', ['audited' => 'no']), 'text' => number_format($failedAudits) . ' ' . Str::plural('audit', $failedAudits) . ' failed', 'action' => 'Retry', 'tone' => 'danger'] : null,
             $failedDrafts > 0 ? ['url' => route('review', ['status' => 'failed']), 'text' => number_format($failedDrafts) . ' ' . Str::plural('email', $failedDrafts) . ' failed to write', 'action' => 'Retry', 'tone' => 'danger'] : null,
             $searches->isNotEmpty() ? ['url' => route('finder'), 'text' => $searches->count() . ' ' . Str::plural('search', $searches->count()) . ' still running', 'action' => 'Check'] : null,
             ! $apifyConnected ? ['url' => route('finder'), 'text' => 'Connect Apify to start finding leads', 'action' => 'Set up', 'tone' => 'warning'] : null,
@@ -38,8 +37,26 @@
     <section class="card">
         <div class="card__head">
             <h2 class="card__title">Waiting on you</h2>
-            @if ($waiting->isNotEmpty())<span class="caption">{{ $waiting->count() }} {{ Str::plural('thing', $waiting->count()) }}</span>@endif
+            @php $waitingCount = $waiting->count() + ($failedAudits > 0 ? 1 : 0); @endphp
+            @if ($waitingCount)<span class="caption">{{ $waitingCount }} {{ Str::plural('thing', $waitingCount) }}</span>@endif
         </div>
+        @if ($failedAudits > 0)
+            <div class="list-link failed-audits">
+                <span>
+                    <x-pill tone="danger">Failed</x-pill>
+                    <a href="{{ route('leads', ['audited' => 'failed']) }}">{{ number_format($failedAudits) }} {{ Str::plural('audit', $failedAudits) }} failed</a>
+                    @foreach ($failureReasons as $why)
+                        <span class="caption failed-audits__why">{{ number_format($why['count']) }}: {{ $why['reason'] }}</span>
+                    @endforeach
+                </span>
+                @can('edit')
+                    <form method="post" action="{{ route('audits.retry-failed') }}">
+                        @csrf
+                        <button type="submit" class="btn btn--ghost btn--sm" data-busy="Checking the key…">Retry all</button>
+                    </form>
+                @endcan
+            </div>
+        @endif
         @forelse ($waiting as $item)
             <a href="{{ $item['url'] }}" class="list-link">
                 <span>
@@ -49,7 +66,7 @@
                 <span class="brand-text"><strong>{{ $item['action'] }}</strong></span>
             </a>
         @empty
-            <div class="caption">Nothing waiting. You're all caught up.</div>
+            @if ($failedAudits === 0)<div class="caption">Nothing waiting. You're all caught up.</div>@endif
         @endforelse
     </section>
 

@@ -7,6 +7,12 @@
 */
 
 return [
+    ['version' => '1.6', 'date' => '2026-10-25', 'title' => 'Clean-up and trust', 'notes' => [
+        'The Dashboard says why audits failed (bad key, no credit, timeouts) and how many each.',
+        'Retry all checks the Claude key first, so hundreds of audits don\'t fail the same way again.',
+        'Leads: filter by audit (failed) and by where a lead came from (Lead Finder or CRM call lists); CRM leads carry a CRM tag.',
+        'Export CSV downloads the leads you are looking at, ready for Excel or Google Sheets.',
+    ]],
     ['version' => '1.5', 'date' => '2026-10-24', 'title' => 'Choose what goes to the CRM', 'notes' => [
         'Settings → CRM connection: set the minimum score for leads sent to the CRM call lists.',
         'Tick packages (Starter, Growth, Scale) whose leads always go, whatever their score.',

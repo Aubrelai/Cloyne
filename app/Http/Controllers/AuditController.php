@@ -71,4 +71,26 @@ class AuditController extends Controller
             ? "Auditing {$count} " . str('lead')->plural($count) . ' in the background. Keep the Cloyne worker window open; refresh to see scores.'
             : 'Every lead here is already audited or queued.');
     }
+
+    /** Queue every failed audit again (up to 500), e.g. after fixing the Claude key. */
+    public function retryFailed(Claude $claude): RedirectResponse
+    {
+        if (! Claude::isConfigured()) {
+            return back()->withErrors(['audit' => 'Add your Claude API key (ANTHROPIC_API_KEY) to the .env file first.']);
+        }
+
+        // Don't queue hundreds of audits that will fail the same way: check the key first.
+        try {
+            $claude->testConnection();
+        } catch (Throwable $e) {
+            return back()->withErrors(['audit' => 'Not retried: '.FriendlyError::message($e)]);
+        }
+
+        $count = AuditBusiness::queueFor(Business::whereNull('score')->where('audit_status', 'failed')
+            ->where('stage', '!=', 'excluded')->limit(500)->get());
+
+        return back()->with('status', $count
+            ? 'Retrying '.$count.' '.str('audit')->plural($count).' in the background.'
+            : 'No failed audits to retry.');
+    }
 }
