@@ -145,6 +145,11 @@ return [
     | from these settings; a person approves every draft before anything sends.
     | Booking link and mailing address can be changed in .env.
     */
+    // Re-audit leads whose last audit is older than this many days (websites and ads change). 0 = never.
+    // A daily job queues at most reaudit_per_day of them, oldest first, so Claude costs stay small.
+    'reaudit_days' => (int) env('CLOYNE_REAUDIT_DAYS', 60),
+    'reaudit_per_day' => (int) env('CLOYNE_REAUDIT_PER_DAY', 100),
+
     // Which audited leads (with a phone number) Cloyne offers to the LaiQ Digital CRM's call lists.
     // A lead goes if its score is at least min_score, OR its best-fit package is in always_packages.
     // The Owner changes both in Settings → CRM connection.

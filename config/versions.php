@@ -7,6 +7,10 @@
 */
 
 return [
+    ['version' => '1.7', 'date' => '2026-10-25', 'title' => 'Sharper audits', 'notes' => [
+        'Audits weigh Google reviews against the website: a well-loved business with a weak site is flagged as a top prospect, in a "Reviews vs website" finding and in the talking point.',
+        'Leads are re-audited automatically once their audit is 60 days old (up to 100 a night, oldest first), so scores and packages stay current.',
+    ]],
     ['version' => '1.6', 'date' => '2026-10-25', 'title' => 'Clean-up and trust', 'notes' => [
         'The Dashboard says why audits failed (bad key, no credit, timeouts) and how many each.',
         'Retry all checks the Claude key first, so hundreds of audits don\'t fail the same way again.',

@@ -131,11 +131,37 @@ class Auditor
         7. disqualified: true only if a not-fit rule rules the business out of every package (e.g. permanently closed,
            a national chain, not a local business). Give the reason.
 
+        Reputation vs website: compare the "reputation" line with the website scan. A business with a strong reputation
+        (many good reviews) and a missing, broken, dated or not-mobile website is LaiQ's best prospect: customers already
+        trust it, and the website loses them. Say so in a check titled "Reviews vs website" and in the pitch. A weak
+        reputation is a reason for review requests (Growth), not a website alone. If there is a previous audit, judge
+        afresh from today's evidence; don't copy its score.
+
         Notes on the scan: "Meta Pixel" detection means the site has Facebook tracking, which usually means it runs or
         ran Meta ads; we cannot see the Meta Ad Library yet, so say "likely" rather than claiming active ads.
         A missing viewport tag strongly suggests the site isn't mobile-friendly. A copyright year 3+ years old suggests
         a dated site. If the site didn't load, treat it like a broken website.
         PROMPT;
+    }
+
+    /**
+     * How strong the business looks on Google, in words, so the audit can weigh it against the website:
+     * a well-reviewed business with a weak site is LaiQ's best prospect.
+     */
+    public static function reputation(Business $business): ?string
+    {
+        $rating = (float) $business->rating;
+        $reviews = (int) $business->review_count;
+        if (! $reviews) {
+            return 'no Google reviews yet';
+        }
+
+        return match (true) {
+            $rating >= 4.5 && $reviews >= 50 => "strong: {$rating} stars from {$reviews} reviews",
+            $rating >= 4.0 && $reviews >= 15 => "good: {$rating} stars from {$reviews} reviews",
+            $rating > 0 && $rating < 3.5 => "weak: {$rating} stars from {$reviews} reviews",
+            default => "modest: {$rating} stars from {$reviews} reviews",
+        };
     }
 
     private function businessBrief(Business $business, array $signals): string
@@ -150,6 +176,8 @@ class Auditor
             'rating' => $business->rating ? (string) $business->rating : null,
             'review count' => $business->review_count,
             'chain' => $business->is_chain ? 'yes: '.Business::CHAIN_LOCATIONS.'+ Google listings share this website' : null,
+            'reputation' => self::reputation($business),
+            'previous audit' => $business->latestAudit ? sprintf('%d days ago, score %d', $business->auditAgeDays(), $business->latestAudit->score) : null,
         ], fn ($v) => ! is_null($v));
 
         return "Business (from Google Maps):\n" . json_encode($google, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)

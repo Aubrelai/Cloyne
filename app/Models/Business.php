@@ -279,6 +279,20 @@ class Business extends Model
     }
 
     /** Days since the latest audit, or null. */
+    /** Audited leads still in play whose newest audit is older than $days days, oldest audit first. */
+    public function scopeStaleAudit(Builder $query, int $days): Builder
+    {
+        $latest = Audit::selectRaw('business_id, max(audited_at) as last_audited_at')->groupBy('business_id');
+
+        return $query->select('businesses.*')
+            ->joinSub($latest, 'last_audit', 'last_audit.business_id', '=', 'businesses.id')
+            ->where('last_audit.last_audited_at', '<', now()->subDays($days))
+            ->whereNotNull('businesses.score')
+            ->whereNotIn('businesses.stage', ['excluded', 'booked'])
+            ->where(fn ($q) => $q->whereNull('businesses.audit_status')->orWhere('businesses.audit_status', '!=', 'queued'))
+            ->orderBy('last_audit.last_audited_at');
+    }
+
     public function auditAgeDays(): ?int
     {
         $at = $this->latestAudit?->audited_at;

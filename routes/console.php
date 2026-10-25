@@ -19,3 +19,9 @@ Schedule::command('queue:work --stop-when-empty --max-time=50 --tries=2 --timeou
 Schedule::command('cloyne:sync-searches')
     ->everyTwoMinutes()
     ->withoutOverlapping(10);
+
+// Websites and ads change: re-audit leads whose last audit is older than cloyne.reaudit_days (60),
+// at most cloyne.reaudit_per_day (100) a night, oldest first.
+Schedule::command('cloyne:reaudit-stale')
+    ->dailyAt('03:30')
+    ->withoutOverlapping(30);
