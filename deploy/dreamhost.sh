@@ -54,10 +54,12 @@ if [ "${1:-}" = "settings" ]; then
     read -rsp "New MySQL password: " CLOYNE_DB_PASSWORD; echo
     read -rsp "Claude API key: " CLOYNE_ANTHROPIC; echo
     read -rsp "Apify API token: " CLOYNE_APIFY; echo
-    export CLOYNE_DB_PASSWORD CLOYNE_ANTHROPIC CLOYNE_APIFY
+    read -rsp "MillionVerifier key (optional): " CLOYNE_VERIFIER; echo
+    export CLOYNE_DB_PASSWORD CLOYNE_ANTHROPIC CLOYNE_APIFY CLOYNE_VERIFIER
     [ -z "$CLOYNE_DB_PASSWORD" ] || "$PHP" deploy/set-env.php DB_PASSWORD=@CLOYNE_DB_PASSWORD
     [ -z "$CLOYNE_ANTHROPIC" ] || "$PHP" deploy/set-env.php ANTHROPIC_API_KEY=@CLOYNE_ANTHROPIC
     [ -z "$CLOYNE_APIFY" ] || "$PHP" deploy/set-env.php APIFY_TOKEN=@CLOYNE_APIFY
+    [ -z "$CLOYNE_VERIFIER" ] || "$PHP" deploy/set-env.php MILLIONVERIFIER_KEY=@CLOYNE_VERIFIER
     "$PHP" artisan optimize
     "$PHP" artisan queue:restart >/dev/null || true
     echo "Saved."

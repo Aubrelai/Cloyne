@@ -101,7 +101,7 @@ Route::middleware(['auth', 'fresh-password'])->group(function () {
         Route::put('/outreach', [SettingsController::class, 'updateOutreach'])->name('settings.outreach');
         Route::delete('/outreach', [SettingsController::class, 'resetOutreach'])->name('settings.outreach.reset');
         Route::put('/selling', [SettingsController::class, 'updateSelling'])->name('settings.selling');
-        Route::post('/test/{service}', [SettingsController::class, 'test'])->whereIn('service', ['apify', 'claude'])->name('settings.test');
+        Route::post('/test/{service}', [SettingsController::class, 'test'])->whereIn('service', ['apify', 'claude', 'millionverifier'])->name('settings.test');
         Route::put('/crm', [SettingsController::class, 'updateCrm'])->name('settings.crm');
         Route::post('/costs-key', [CostsController::class, 'createKey'])->name('settings.costs-key');
         Route::delete('/costs-key', [CostsController::class, 'revokeKey'])->name('settings.costs-key.revoke');

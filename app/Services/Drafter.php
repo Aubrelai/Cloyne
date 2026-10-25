@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Contact;
 use App\Models\Business;
 use App\Models\Draft;
 use App\Models\Setting;
@@ -15,7 +16,6 @@ class Drafter
 {
     public function __construct(private Claude $claude) {}
 
-    /** Fill in a draft (creates one if needed). */
     /** Quick rewrites offered in the Review queue. */
     public const REWRITES = [
         'shorter' => 'Rewrite it shorter: 60 words or fewer, same gap, same call to action.',
@@ -23,13 +23,39 @@ class Drafter
         'angle' => 'Rewrite it built on a DIFFERENT gap from the audit findings than the previous version used.',
     ];
 
+    /**
+     * The email to write to: checked with MillionVerifier first when it's connected (invalid ones are
+     * never used), verified addresses before risky ones, oldest first. null = no address worth a draft.
+     */
+    private function emailContact(Business $business): ?Contact
+    {
+        $contacts = $business->contacts()->whereNotNull('email')->whereNotIn('email_status', ['invalid', 'bounced'])->oldest()->get();
+
+        if (EmailVerifier::isConfigured()) {
+            foreach ($contacts->whereNull('email_checked_at')->take(3) as $contact) {
+                app(EmailVerifier::class)->check($contact);
+            }
+            $contacts = $contacts->filter(fn ($c) => ! in_array($c->email_status, ['invalid', 'bounced'], true));
+        }
+
+        return $contacts->sortBy(fn ($c) => $c->email_status === 'verified' ? 0 : 1)->first();
+    }
+
+    /** Fill in a draft (creates one if needed). */
     public function write(Business $business, ?Draft $draft = null, ?string $rewrite = null): Draft
     {
         Setting::applyToConfig(); // the worker runs for hours; pick up rules changed in Settings
         $business->loadMissing(['latestAudit', 'primaryContact']);
-        $contact = $business->contacts()->whereNotNull('email')->oldest()->first();
-
         $draft ??= $business->drafts()->create(['status' => 'writing']);
+
+        $contact = $this->emailContact($business);
+        $hadEmail = $business->contacts()->whereNotNull('email')->exists();
+        if (! $contact && $hadEmail) {
+            $draft->update(['status' => 'skipped', 'error' => 'No working email: the address failed the email check, so Cloyne won\'t write to it.', 'reviewed_at' => now()]);
+
+            return $draft;
+        }
+
         $previous = $rewrite && $draft->body ? ['subject' => $draft->subject, 'body' => $draft->body, 'angle' => $draft->angle] : null;
         $draft->update(['status' => 'writing', 'error' => null]);
 

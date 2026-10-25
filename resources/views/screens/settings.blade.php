@@ -20,6 +20,8 @@
              'usage' => number_format($usage['searches']) . ' ' . Str::plural('search', $usage['searches']) . ' · ' . number_format($usage['found']) . ' businesses · about $' . number_format($usage['apifyCost'], 2) . ' this month'],
             ['key' => 'claude', 'name' => 'Claude API', 'about' => 'AI audit, scoring and email drafts', 'env' => 'ANTHROPIC_API_KEY', 'on' => $claudeConnected,
              'usage' => number_format($usage['audits']) . ' ' . Str::plural('audit', $usage['audits']) . ' · ' . number_format($usage['drafts']) . ' ' . Str::plural('email', $usage['drafts']) . ' written this month'],
+            ['key' => 'millionverifier', 'name' => 'MillionVerifier', 'about' => 'Checks every email is real before a draft is written (optional)', 'env' => 'MILLIONVERIFIER_KEY', 'on' => $verifierConnected,
+             'usage' => number_format($usage['checked']) . ' ' . Str::plural('email', $usage['checked']) . ' checked this month · ' . number_format($usage['invalid']) . ' invalid'],
         ] as $service)
             <div class="split connection-row">
                 <div>

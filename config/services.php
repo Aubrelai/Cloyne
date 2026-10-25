@@ -55,6 +55,11 @@ return [
     ],
 
     // Lead Finder: Google Maps scraping through Apify (https://apify.com)
+    // Email checks before drafts (https://millionverifier.com). Off while blank.
+    'millionverifier' => [
+        'key' => env('MILLIONVERIFIER_KEY'),
+    ],
+
     'apify' => [
         'token' => env('APIFY_TOKEN'),
         'maps_actor' => env('APIFY_MAPS_ACTOR', 'compass/crawler-google-places'),

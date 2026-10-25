@@ -6,6 +6,7 @@ use App\Models\Business;
 use App\Models\Setting;
 use App\Services\Apify;
 use App\Services\Claude;
+use App\Services\EmailVerifier;
 use App\Support\FriendlyError;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -93,9 +94,14 @@ class SettingsController extends Controller
             .'. '.number_format($waiting).' '.str('lead')->plural($waiting).' waiting for the CRM to pick up.');
     }
 
-    public function test(string $service, Apify $apify, Claude $claude): RedirectResponse
+    public function test(string $service, Apify $apify, Claude $claude, EmailVerifier $verifier): RedirectResponse
     {
         try {
+            if ($service === 'millionverifier') {
+                $credits = $verifier->testConnection();
+
+                return back()->with('status', 'MillionVerifier works. '.number_format($credits).' '.str('credit')->plural($credits).' left.');
+            }
             if ($service === 'apify') {
                 $name = $apify->testConnection();
 
@@ -105,7 +111,7 @@ class SettingsController extends Controller
 
             return back()->with('status', 'Claude works. The key is valid.');
         } catch (Throwable $e) {
-            return back()->withErrors(['connection' => FriendlyError::message($e, $service === 'apify' ? 'Apify' : 'Claude')]);
+            return back()->withErrors(['connection' => FriendlyError::message($e, match ($service) { 'apify' => 'Apify', 'millionverifier' => 'MillionVerifier', default => 'Claude' })]);
         }
     }
 }

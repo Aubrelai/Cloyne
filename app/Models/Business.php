@@ -125,7 +125,7 @@ class Business extends Model
         return $query
             ->where('score', '>=', (int) config('cloyne.outreach.min_score', 60))
             ->whereIn('stage', ['audited', 'draft_ready', 'new'])
-            ->whereHas('contacts', fn ($c) => $c->whereNotNull('email'))
+            ->whereHas('contacts', fn ($c) => $c->whereNotNull('email')->whereNotIn('email_status', ['invalid', 'bounced']))
             ->where(fn ($q) => $q->whereIn('package', $selling)->orWhereIn('pitch_package', $selling))
             ->whereDoesntHave('drafts', fn ($d) => $d->whereIn('status', Draft::ACTIVE))
             // Leads on the CRM's cold-call lists are the callers' to work, so Cloyne doesn't email them too.

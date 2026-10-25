@@ -258,7 +258,10 @@ class ScreenController extends Controller
             'apifyConnected' => Apify::isConfigured(),
             'searchCount' => Search::count(),
             'claudeConnected' => Claude::isConfigured(),
+            'verifierConnected' => \App\Services\EmailVerifier::isConfigured(),
             'usage' => [
+                'checked' => \App\Models\Contact::where('email_checked_at', '>=', now()->startOfMonth())->count(),
+                'invalid' => \App\Models\Contact::where('email_checked_at', '>=', now()->startOfMonth())->where('email_status', 'invalid')->count(),
                 'searches' => Search::where('created_at', '>=', now()->startOfMonth())->count(),
                 'found' => (int) Search::where('created_at', '>=', now()->startOfMonth())->sum('found'),
                 'audits' => Audit::where('audited_at', '>=', now()->startOfMonth())->count(),
