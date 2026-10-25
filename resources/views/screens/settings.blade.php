@@ -46,7 +46,7 @@
         @endforeach
         <div class="split connection-row">
             <div><strong>Instantly</strong><div class="caption">Sending and inbox warm-up</div></div>
-            <x-pill tone="neutral">Step 5</x-pill>
+            <x-pill tone="neutral">Version 2.0</x-pill>
         </div>
         <div class="split connection-row" style="border-bottom: 0">
             <div><strong>LaiQ Digital CRM</strong><div class="caption">Cold-call lists, call results and costs · see CRM connection below</div></div>

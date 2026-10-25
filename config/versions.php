@@ -7,6 +7,11 @@
 */
 
 return [
+    ['version' => '1.9', 'date' => '2026-10-25', 'title' => "What's working", 'notes' => [
+        'Dashboard: this month from found to audited, hot, called, talked and booked, with the share that made it to each step.',
+        'Results per caller (calls, conversations, bookings, booked per call) and per category, from the call results the CRM sends.',
+        'What Apify and Claude cost this month, and the cost per booked call.',
+    ]],
     ['version' => '1.8', 'date' => '2026-10-25', 'title' => 'Real emails only', 'notes' => [
         'With a MillionVerifier key, Cloyne checks each email is real before writing to it. Invalid ones are never used; "catch-all" ones are marked Risky.',
         'Leads whose only email failed the check drop out of the email queue.',

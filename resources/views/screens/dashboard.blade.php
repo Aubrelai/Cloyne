@@ -130,6 +130,60 @@
         </div>
     </div>
 
+    <section class="card" id="results">
+        <div class="card__head">
+            <h2 class="card__title">What's working · {{ $results['month'] }}</h2>
+            <span class="caption">
+                ${{ number_format($results['cost'], 2) }} on Apify and Claude
+                @if ($results['cost_per_booked']) · <strong class="mono">${{ number_format($results['cost_per_booked'], 2) }}</strong> per booked call @endif
+            </span>
+        </div>
+        @php $top = max(1, $results['funnel'][0]['count']); @endphp
+        <ol class="funnel" aria-label="This month from found to booked">
+            @foreach ($results['funnel'] as $step)
+                @php $prev = $loop->first ? null : $results['funnel'][$loop->index - 1]['count']; @endphp
+                <li class="funnel__step">
+                    <span class="funnel__label">{{ $step['label'] }}</span>
+                    <span class="funnel__bar"><span @class(['funnel__fill', 'funnel__fill--brand' => $step['key'] === 'booked']) style="width: {{ max(1, round($step['count'] / $top * 100)) }}%"></span></span>
+                    <span class="mono funnel__count">{{ number_format($step['count']) }}</span>
+                    <span class="caption funnel__rate">@if ($prev && $step['count'] <= $prev){{ round($step['count'] / $prev * 100) }}% of {{ Str::lower($results['funnel'][$loop->index - 1]['label']) }}@endif</span>
+                </li>
+            @endforeach
+        </ol>
+        <div class="results-grid">
+            <div>
+                <h3 class="profile__subhead">Callers</h3>
+                @if ($results['callers']->isEmpty())
+                    <div class="caption">Call results show here once the CRM sends them.</div>
+                @else
+                    <table class="table table--compact">
+                        <thead><tr><th>Caller</th><th class="num">Calls</th><th class="num">Talked</th><th class="num">Booked</th><th class="num">Booked per call</th></tr></thead>
+                        <tbody>
+                            @foreach ($results['callers'] as $c)
+                                <tr><td>{{ $c['caller'] }}</td><td class="num mono">{{ number_format($c['calls']) }}</td><td class="num mono">{{ number_format($c['talked']) }}</td><td class="num mono">{{ number_format($c['booked']) }}</td><td class="num mono">{{ $c['rate'] }}%</td></tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                @endif
+            </div>
+            <div>
+                <h3 class="profile__subhead">Categories</h3>
+                @if ($results['categories']->isEmpty())
+                    <div class="caption">No leads this month yet.</div>
+                @else
+                    <table class="table table--compact">
+                        <thead><tr><th>Category</th><th class="num">New leads</th><th class="num">Hot</th><th class="num">Called</th><th class="num">Booked</th></tr></thead>
+                        <tbody>
+                            @foreach ($results['categories'] as $c)
+                                <tr><td><a href="{{ route('leads', ['category' => $c['category']]) }}" class="results-link">{{ $c['category'] }}</a></td><td class="num mono">{{ number_format($c['leads']) }}</td><td class="num mono">{{ number_format($c['hot']) }}</td><td class="num mono">{{ number_format($c['called']) }}</td><td class="num mono">{{ number_format($c['booked']) }}</td></tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                @endif
+            </div>
+        </div>
+    </section>
+
     <section class="card">
         <h2 class="card__title">Searches</h2>
         @foreach ($searches as $s)

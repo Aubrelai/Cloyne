@@ -68,6 +68,7 @@ class ScreenController extends Controller
             'notAudited' => Business::whereNull('score')->where('stage', '!=', 'excluded')->count(),
             'failedAudits' => Business::where('audit_status', 'failed')->whereNull('score')->count(),
             'failureReasons' => Business::auditFailureReasons(),
+            'results' => \App\Support\Results::month(now()),
             'failedDrafts' => Draft::where('status', 'failed')->count(),
             'draftable' => Business::draftable()->count(),
             'dots' => $dots,
