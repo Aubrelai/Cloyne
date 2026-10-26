@@ -260,6 +260,52 @@
         @endcan
     </section>
 
+    <section class="card" id="updates">
+        @php
+            $latestVersion = collect(config('versions', []))->sort(fn ($a, $b) => version_compare($b['version'], $a['version']))->first();
+            $up = $autoUpdate['status'];
+        @endphp
+        <div class="card__head">
+            <h2 class="card__title">Updates</h2>
+            <span class="caption">Running <span class="mono">v{{ $latestVersion['version'] ?? '?' }}</span> · <a href="{{ route('versions') }}" class="results-link">What's new</a></span>
+        </div>
+        <div class="split connection-row" style="border-bottom: 0">
+            <div>
+                <strong>Install new versions automatically</strong>
+                <div class="caption">The server checks GitHub every 15 minutes and installs a new version by itself, with no Terminal needed.</div>
+                @if ($up)
+                    <div class="caption" style="margin-top: 2px">
+                        {{ $up['message'] }}
+                        @if ($up['checked_at']) · checked <x-time :at="$up['checked_at']" />@endif
+                        @if ($up['updated_at']) · last installed <x-time :at="$up['updated_at']" />@endif
+                    </div>
+                @else
+                    <div class="caption" style="margin-top: 2px">Starts after the next update by hand (bash ~/cloyne-app/deploy/dreamhost.sh).</div>
+                @endif
+            </div>
+            <div class="btn-row" style="align-items: center">
+                @if (! $autoUpdate['on'])
+                    <x-pill tone="neutral">Off</x-pill>
+                @elseif ($up && $up['state'] === 'failed')
+                    <x-pill tone="danger">Stopped</x-pill>
+                @elseif ($up && $up['state'] === 'error')
+                    <x-pill tone="warning">Can't reach GitHub</x-pill>
+                @elseif ($up && in_array($up['state'], ['current', 'updated'], true))
+                    <x-pill tone="success">On</x-pill>
+                @else
+                    <x-pill tone="neutral">Waiting</x-pill>
+                @endif
+                @can('manage-team')
+                    <form method="post" action="{{ route('settings.updates') }}">
+                        @csrf @method('PUT')
+                        <input type="hidden" name="on" value="{{ $autoUpdate['on'] ? 0 : 1 }}">
+                        <button type="submit" class="btn btn--ghost btn--sm">{{ $autoUpdate['on'] ? 'Turn off' : 'Turn on' }}</button>
+                    </form>
+                @endcan
+            </div>
+        </div>
+    </section>
+
     <section class="card" id="team">
         <div class="card__head">
             <h2 class="card__title">Team</h2>

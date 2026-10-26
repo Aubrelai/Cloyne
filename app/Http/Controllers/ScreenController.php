@@ -271,6 +271,7 @@ class ScreenController extends Controller
             ],
             'costs' => \App\Models\ApiCost::monthTotals(now()),
             'costsKey' => CostsController::hasKey(),
+            'autoUpdate' => ['on' => \App\Support\AutoUpdate::isOn(), 'status' => \App\Support\AutoUpdate::status()],
             'crmStats' => [
                 'linked' => Business::whereNotNull('crm_id')->count(),
                 'audited' => Business::whereNotNull('crm_id')->whereNotNull('score')->count(),

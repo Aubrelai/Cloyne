@@ -9,6 +9,8 @@
 # website folder), then run the update command above.
 # Change the database password or add API keys later:
 #   bash ~/cloyne-app/deploy/dreamhost.sh settings
+# Updates also install themselves: deploy/auto-update.sh checks GitHub every 15 minutes
+# (cron, added below) and runs this script with --auto (no questions asked).
 #
 # Passwords and API keys are typed in when asked (hidden) and saved only in
 # ~/cloyne-app/.env on the server. They never go to GitHub.
@@ -16,6 +18,8 @@
 set -euo pipefail
 
 APP_DIR="$HOME/cloyne-app"
+AUTO=0
+[ "${1:-}" = "--auto" ] && AUTO=1
 DOMAIN="cloyne.laiqdigital.com"
 SITE_DIR="$HOME/$DOMAIN"
 REPO="https://github.com/Aubrelai/Cloyne.git"
@@ -71,7 +75,15 @@ step "2/8  Getting the latest code from GitHub"
 if [ -d "$APP_DIR/.git" ]; then
     git -C "$APP_DIR" pull --ff-only
 elif [ -f "$APP_DIR/artisan" ]; then
-    echo "Using the files uploaded to $APP_DIR (FileZilla). Upload new files there to update."
+    # Files were uploaded with FileZilla: connect the folder to GitHub so updates can come straight from there.
+    # .env, storage and vendor aren't on GitHub, so they stay as they are.
+    echo "Connecting $APP_DIR to GitHub (your settings and data stay as they are)..."
+    git -C "$APP_DIR" init -q
+    git -C "$APP_DIR" remote add origin "$REPO" 2>/dev/null || git -C "$APP_DIR" remote set-url origin "$REPO"
+    git -C "$APP_DIR" fetch -q origin main
+    git -C "$APP_DIR" reset -q --hard origin/main
+    git -C "$APP_DIR" branch -q -M main
+    git -C "$APP_DIR" branch -q -u origin/main
 else
     git clone "$REPO" "$APP_DIR"
 fi
@@ -96,6 +108,9 @@ fi
 
 # ---------------------------------------------------------------------------
 step "4/8  Settings"
+if [ "$FIRST_RUN" = "1" ] && [ "$AUTO" = "1" ]; then
+    fail "Automatic update stopped: Cloyne isn't set up yet (no .env). Run this script by hand once."
+fi
 if [ "$FIRST_RUN" = "1" ]; then
     cp .env.example .env
     echo "Answers are hidden as you type. Press Enter to skip an optional one; you can add it later."
@@ -142,8 +157,10 @@ fi
 # ---------------------------------------------------------------------------
 step "7/8  Background worker (runs every minute)"
 CRON_LINE="* * * * * cd $APP_DIR && $PHP artisan schedule:run >> /dev/null 2>&1"
-if (crontab -l 2>/dev/null | grep -v 'cloyne-app && .*schedule:run'; echo "$CRON_LINE") | crontab - 2>/dev/null; then
+UPDATE_LINE="*/15 * * * * bash $APP_DIR/deploy/auto-update.sh >> /dev/null 2>&1"
+if (crontab -l 2>/dev/null | grep -v 'cloyne-app && .*schedule:run' | grep -v 'cloyne-app/deploy/auto-update.sh'; echo "$CRON_LINE"; echo "$UPDATE_LINE") | crontab - 2>/dev/null; then
     echo "Scheduled: audits, email drafts and Lead Finder results are processed every minute."
+    echo "Scheduled: new Cloyne versions install themselves (checked every 15 minutes; turn off in Settings)."
 else
     echo "Couldn't add the scheduled job automatically. In the DreamHost panel, go to"
     echo "Advanced > Cron Jobs, add one that runs every minute, with this command:"
@@ -155,7 +172,7 @@ step "8/8  Finishing up"
 "$PHP" artisan optimize
 "$PHP" artisan queue:restart >/dev/null || true
 
-if ! "$PHP" artisan cloyne:owner --check >/dev/null 2>&1; then
+if [ "$AUTO" = "0" ] && ! "$PHP" artisan cloyne:owner --check >/dev/null 2>&1; then
     echo
     echo "Create the Owner account now, so nobody else can claim it."
     read -rp "Owner email: " OWNER_EMAIL

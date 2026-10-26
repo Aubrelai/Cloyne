@@ -7,6 +7,7 @@ use App\Models\Setting;
 use App\Services\Apify;
 use App\Services\Claude;
 use App\Services\EmailVerifier;
+use App\Support\AutoUpdate;
 use App\Support\FriendlyError;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -92,6 +93,17 @@ class SettingsController extends Controller
             'CRM call lists get leads scoring '.$data['crm_min_score'].'+'
             .($always ? ', plus every '.collect($always)->map(fn ($k) => Business::packages()[$k]['short'] ?? $k)->implode(', ').' lead' : '')
             .'. '.number_format($waiting).' '.str('lead')->plural($waiting).' waiting for the CRM to pick up.');
+    }
+
+    /** Owner: switch automatic updates on or off (the server script checks for the off file). */
+    public function updateAutoUpdate(Request $request): RedirectResponse
+    {
+        $on = $request->boolean('on');
+        AutoUpdate::turn($on);
+
+        return redirect()->to(route('settings').'#updates')->with('status', $on
+            ? 'Automatic updates are on. The server checks for a new version every 15 minutes.'
+            : 'Automatic updates are off. Update by hand with: bash ~/cloyne-app/deploy/dreamhost.sh');
     }
 
     public function test(string $service, Apify $apify, Claude $claude, EmailVerifier $verifier): RedirectResponse

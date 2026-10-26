@@ -7,6 +7,11 @@
 */
 
 return [
+    ['version' => '1.10', 'date' => '2026-10-26', 'title' => 'Updates install themselves', 'notes' => [
+        'The server checks GitHub every 15 minutes and installs new versions by itself. No more Terminal for updates.',
+        'Settings → Updates shows the version running, when it last checked and installed, and lets the Owner turn it off.',
+        'If an update stops part way, Settings says so and the server keeps retrying.',
+    ]],
     ['version' => '1.9', 'date' => '2026-10-25', 'title' => "What's working", 'notes' => [
         'Dashboard: this month from found to audited, hot, called, talked and booked, with the share that made it to each step.',
         'Results per caller (calls, conversations, bookings, booked per call) and per category, from the call results the CRM sends.',
