@@ -31,6 +31,7 @@ class Setting extends Model
         'monthly_budget' => 'cloyne.monthly_budget',
         'crm_min_score' => 'cloyne.crm.min_score',
         'crm_always_packages' => 'cloyne.crm.always_packages',
+        'factsheet' => 'factsheet.entries',
     ];
 
     public static function put(string $key, mixed $value): void

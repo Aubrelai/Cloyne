@@ -260,6 +260,57 @@
         @endcan
     </section>
 
+    <section class="card" id="factsheet">
+        @php
+            $facts = old('entries', config('factsheet.entries', []));
+            $factsCustom = \App\Models\Setting::isSet('factsheet');
+        @endphp
+        <div class="card__head">
+            <h2 class="card__title">Fact sheet for replies</h2>
+            <span class="caption">{{ count(config('factsheet.entries', [])) }} approved answers{{ $factsCustom ? ' · edited' : ' · LaiQ defaults' }} · used by the reply agent in version 3.0</span>
+        </div>
+        <div class="caption">When businesses reply, Cloyne's AI may only answer with what's here. Everything else goes to a person: {{ Str::lower(implode(', ', config('factsheet.handoff', []))) }}.</div>
+        @if ($errors->factsheet->any())
+            <div role="alert"><x-pill tone="danger">Not saved</x-pill> {{ $errors->factsheet->first() }}</div>
+        @endif
+        @can('manage-team')
+            <form method="post" action="{{ route('settings.factsheet') }}" data-warn-unsaved class="facts-form">
+                @csrf @method('PUT')
+                @foreach (array_merge(array_values($facts), [['q' => '', 'a' => ''], ['q' => '', 'a' => '']]) as $i => $fact)
+                    <div class="fact-row">
+                        <div class="field">
+                            <label for="fact-q-{{ $i }}" class="label">{{ $fact['q'] === '' ? 'New question' : 'Question' }}</label>
+                            <input id="fact-q-{{ $i }}" name="entries[{{ $i }}][q]" class="input" maxlength="200" value="{{ $fact['q'] }}" placeholder="{{ $fact['q'] === '' ? 'Add a question people ask' : '' }}">
+                        </div>
+                        <div class="field">
+                            <label for="fact-a-{{ $i }}" class="label">Approved answer</label>
+                            <textarea id="fact-a-{{ $i }}" name="entries[{{ $i }}][a]" class="input" rows="2" maxlength="1200">{{ $fact['a'] }}</textarea>
+                        </div>
+                    </div>
+                @endforeach
+                <div class="btn-row">
+                    <button type="submit" class="btn btn--secondary">Save fact sheet</button>
+                    @if ($factsCustom)
+                        <button type="submit" form="factsheet-reset" class="btn btn--ghost">Reset to LaiQ defaults</button>
+                    @endif
+                </div>
+                <div class="caption">To remove an answer, clear both its boxes. Two empty rows at the end add new ones.</div>
+            </form>
+            @if ($factsCustom)
+                <form method="post" action="{{ route('settings.factsheet.reset') }}" id="factsheet-reset" data-confirm="Reset the fact sheet? Your edits are replaced by LaiQ's default answers." data-confirm-button="Reset">
+                    @csrf @method('DELETE')
+                </form>
+            @endif
+        @else
+            <dl class="facts">
+                @foreach (config('factsheet.entries', []) as $fact)
+                    <dt>{{ $fact['q'] }}</dt><dd>{{ $fact['a'] }}</dd>
+                @endforeach
+            </dl>
+            <div class="caption">Only the Owner can change these.</div>
+        @endcan
+    </section>
+
     <section class="card" id="updates">
         @php
             $latestVersion = collect(config('versions', []))->sort(fn ($a, $b) => version_compare($b['version'], $a['version']))->first();

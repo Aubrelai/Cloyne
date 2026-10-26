@@ -7,6 +7,11 @@
 */
 
 return [
+    ['version' => '1.11', 'date' => '2026-10-26', 'title' => 'Fact sheet for replies', 'notes' => [
+        'Settings → Fact sheet: the approved answers (what LaiQ does, each package, contracts, ad spend, how the call works) that the reply agent may use in version 3.0.',
+        'Prices, complaints, legal questions and anything not on the sheet always go to a person.',
+        'The Owner can edit, add or remove answers, or reset to LaiQ defaults.',
+    ]],
     ['version' => '1.10', 'date' => '2026-10-26', 'title' => 'Updates install themselves', 'notes' => [
         'The server checks GitHub every 15 minutes and installs new versions by itself. No more Terminal for updates.',
         'Settings → Updates shows the version running, when it last checked and installed, and lets the Owner turn it off.',

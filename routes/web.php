@@ -104,6 +104,8 @@ Route::middleware(['auth', 'fresh-password'])->group(function () {
         Route::post('/test/{service}', [SettingsController::class, 'test'])->whereIn('service', ['apify', 'claude', 'millionverifier'])->name('settings.test');
         Route::put('/crm', [SettingsController::class, 'updateCrm'])->name('settings.crm');
         Route::put('/updates', [SettingsController::class, 'updateAutoUpdate'])->name('settings.updates');
+        Route::put('/factsheet', [SettingsController::class, 'updateFactsheet'])->name('settings.factsheet');
+        Route::delete('/factsheet', [SettingsController::class, 'resetFactsheet'])->name('settings.factsheet.reset');
         Route::post('/costs-key', [CostsController::class, 'createKey'])->name('settings.costs-key');
         Route::delete('/costs-key', [CostsController::class, 'revokeKey'])->name('settings.costs-key.revoke');
     });

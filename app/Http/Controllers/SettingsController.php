@@ -106,6 +106,40 @@ class SettingsController extends Controller
             : 'Automatic updates are off. Update by hand with: bash ~/cloyne-app/deploy/dreamhost.sh');
     }
 
+    /** Owner: save the fact sheet. Blank rows are dropped; a row needs both a question and an answer. */
+    public function updateFactsheet(Request $request): RedirectResponse
+    {
+        $data = $request->validateWithBag('factsheet', [
+            'entries' => ['array', 'max:60'],
+            'entries.*.q' => ['nullable', 'string', 'max:200'],
+            'entries.*.a' => ['nullable', 'string', 'max:1200'],
+        ]);
+
+        $entries = collect($data['entries'] ?? [])
+            ->map(fn ($e) => ['q' => trim((string) ($e['q'] ?? '')), 'a' => trim((string) ($e['a'] ?? ''))])
+            ->reject(fn ($e) => $e['q'] === '' && $e['a'] === '')
+            ->values();
+
+        if ($entries->contains(fn ($e) => $e['q'] === '' || $e['a'] === '')) {
+            return back()->withInput()->withErrors(['entries' => 'Every row needs both a question and an answer (or leave both blank to remove it).'], 'factsheet');
+        }
+        if ($entries->isEmpty()) {
+            return back()->withErrors(['entries' => 'Keep at least one answer. To start over, use Reset to LaiQ defaults.'], 'factsheet');
+        }
+
+        Setting::put('factsheet', $entries->all());
+
+        return redirect()->to(route('settings').'#factsheet')->with('status', 'Fact sheet saved: '.$entries->count().' '.str('answer')->plural($entries->count()).'.');
+    }
+
+    public function resetFactsheet(): RedirectResponse
+    {
+        Setting::forget('factsheet');
+        config(['factsheet.entries' => (require config_path('factsheet.php'))['entries']]);
+
+        return redirect()->to(route('settings').'#factsheet')->with('status', 'Fact sheet reset to LaiQ defaults.');
+    }
+
     public function test(string $service, Apify $apify, Claude $claude, EmailVerifier $verifier): RedirectResponse
     {
         try {

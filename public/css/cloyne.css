@@ -457,3 +457,8 @@ th[aria-sort="ascending"] .sort-link, th[aria-sort="descending"] .sort-link { co
   .funnel__step { grid-template-columns: 72px 1fr 48px; }
   .funnel__rate { display: none; }
 }
+.facts-form { display: flex; flex-direction: column; gap: var(--space-3); margin-top: var(--space-3); }
+.fact-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: var(--space-3); padding-bottom: var(--space-3); border-bottom: 1px solid var(--border); }
+.fact-row .field { margin: 0; }
+.fact-row textarea { resize: vertical; min-height: 60px; }
+@media (max-width: 760px) { .fact-row { grid-template-columns: 1fr; } }
