@@ -34,8 +34,7 @@
     @unless ($readyToSend)
         <section class="card" style="border-color: var(--warning)">
             <div class="split"><h2 class="card__title">Add a mailing address before sending</h2><x-pill tone="warning">Missing</x-pill></div>
-            <div class="caption">The law (CAN-SPAM) requires a real postal address in every email. A PO box or virtual mailbox is fine. You can review and approve drafts now; add this line to <span class="mono">.env</span> before sending starts in Step 5:</div>
-            <div class="mono" style="padding: 10px 12px; border-radius: var(--radius-sm); background: var(--surface-raised)">CLOYNE_MAILING_ADDRESS="LaiQ Digital, street, city, state ZIP"</div>
+            <div class="caption">The law (CAN-SPAM) requires a real postal address in every email. A PO box or virtual mailbox is fine. You can review and approve drafts now; nothing sends until the address is in <a href="{{ route('settings') }}#outreach" class="results-link">Settings → Outreach emails</a>.</div>
         </section>
     @endunless
 

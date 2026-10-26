@@ -44,6 +44,17 @@ class AppServiceProvider extends ServiceProvider
                 $request->attributes->set('cloyne.pending', $count);
             }
             $view->with('pendingDrafts', $request->attributes->get('cloyne.pending'));
+
+            // Unread replies from people (version 2.0): the Inbox badge.
+            if (! $request->attributes->has('cloyne.unread')) {
+                try {
+                    $unread = auth()->check() ? \App\Models\Reply::whereNull('read_at')->where('is_auto_reply', false)->count() : 0;
+                } catch (Throwable) {
+                    $unread = 0;
+                }
+                $request->attributes->set('cloyne.unread', $unread);
+            }
+            $view->with('unreadReplies', $request->attributes->get('cloyne.unread'));
         });
     }
 }

@@ -95,7 +95,7 @@ class DraftController extends Controller
         $draft->update(['status' => 'approved', 'reviewed_by' => $request->user()->id, 'reviewed_at' => now()]);
 
         return redirect()->route('review', ['draft' => $this->nextPending($draft)])
-            ->with('status', "Approved the email to {$draft->business->displayName()}. It sends once sending is set up (Step 5).")
+            ->with('status', "Approved the email to {$draft->business->displayName()}. It goes out with the next batch once sending is on (Campaigns).")
             ->with('undo', ['url' => route('drafts.reopen', $draft), 'label' => 'Undo']);
     }
 
@@ -166,10 +166,17 @@ class DraftController extends Controller
         $data = $request->validate([
             'subject' => ['required', 'string', 'max:120'],
             'body' => ['required', 'string', 'max:5000'],
+            'follow_up_1' => ['nullable', 'string', 'max:2000'],
+            'follow_up_2' => ['nullable', 'string', 'max:2000'],
         ]);
-        $data['body'] = trim(str_replace("\r\n", "\n", $data['body']));
+        foreach (['body', 'follow_up_1', 'follow_up_2'] as $field) {
+            if (array_key_exists($field, $data)) {
+                $data[$field] = filled($data[$field]) ? trim(str_replace("\r\n", "\n", $data[$field])) : null;
+            }
+        }
+        $data = array_intersect_key($data, array_flip(array_merge(['subject', 'body'], array_keys($request->only(['follow_up_1', 'follow_up_2'])))));
 
-        if ($data['subject'] !== $draft->subject || $data['body'] !== $draft->body) {
+        if (collect($data)->contains(fn ($value, $field) => $value !== $draft->{$field})) {
             $draft->update($data + ['edited' => true]);
         }
     }

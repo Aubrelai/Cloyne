@@ -32,6 +32,10 @@ class Setting extends Model
         'crm_min_score' => 'cloyne.crm.min_score',
         'crm_always_packages' => 'cloyne.crm.always_packages',
         'factsheet' => 'factsheet.entries',
+        // Version 2.0 sending (Campaigns screen)
+        'sending_on' => 'cloyne.settings.sending_on',
+        'sending_paused_reason' => 'cloyne.settings.sending_paused_reason',
+        'instantly_campaign' => 'cloyne.settings.instantly_campaign',
     ];
 
     public static function put(string $key, mixed $value): void
@@ -43,6 +47,9 @@ class Setting extends Model
     public static function forget(string $key): void
     {
         static::whereKey($key)->delete();
+        if (str_starts_with(self::OVERRIDES[$key] ?? "cloyne.settings.{$key}", 'cloyne.settings.')) {
+            config([self::OVERRIDES[$key] ?? "cloyne.settings.{$key}" => null]);
+        }
     }
 
     /** Copy saved settings over the config. Called once per request; quiet before the table exists. */

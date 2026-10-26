@@ -55,6 +55,22 @@ return [
     ],
 
     // Lead Finder: Google Maps scraping through Apify (https://apify.com)
+    // Version 2.0 sending (https://instantly.ai). Off until a key is here AND the Owner switches sending on.
+    'instantly' => [
+        'key' => env('INSTANTLY_API_KEY'),
+        'base_url' => 'https://api.instantly.ai/api/v2',
+        // Most cold emails per sending inbox per day. 30 is safe for new inboxes; never above 50.
+        'per_inbox_daily' => (int) env('CLOYNE_PER_INBOX_DAILY', 30),
+        // When emails go out: weekdays, business hours, in this time zone.
+        'timezone' => env('CLOYNE_SEND_TIMEZONE', 'America/New_York'),
+        'hours' => ['from' => '09:00', 'to' => '16:30'],
+        // Days after the previous email: follow-up 1 on day 3, follow-up 2 on day 7.
+        'follow_up_days' => [3, 4],
+        // Sending pauses by itself above these (share of emails sent in the last 7 days, once 50+ were sent).
+        'max_bounce_rate' => 0.02,
+        'max_opt_out_rate' => 0.05,
+    ],
+
     // Email checks before drafts (https://millionverifier.com). Off while blank.
     'millionverifier' => [
         'key' => env('MILLIONVERIFIER_KEY'),

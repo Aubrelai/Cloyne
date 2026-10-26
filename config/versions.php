@@ -7,6 +7,13 @@
 */
 
 return [
+    ['version' => '2.0', 'date' => '2026-10-26', 'title' => 'Sending (built, switched off)', 'notes' => [
+        'Campaigns: approved emails go out through Instantly as a 3-email sequence (day 0, 3, 7) on weekdays, at most 30 a day per inbox. Any reply stops it.',
+        'Nothing sends until the checklist is done (Instantly key, inboxes connected, warm-up score 80+, mailing address) and the Owner clicks Start sending.',
+        'Claude now writes the day-3 and day-7 follow-ups with each email; edit them in the Review queue.',
+        'Inbox: replies come back every 10 minutes. "No thanks", "stop" and unsubscribes exclude the business and block the address. Bounced addresses are never used again.',
+        'Sending pauses by itself if more than 2% of last week\'s emails bounce or 5% opt out.',
+    ]],
     ['version' => '1.11', 'date' => '2026-10-26', 'title' => 'Fact sheet for replies', 'notes' => [
         'Settings → Fact sheet: the approved answers (what LaiQ does, each package, contracts, ad spend, how the call works) that the reply agent may use in version 3.0.',
         'Prices, complaints, legal questions and anything not on the sheet always go to a person.',

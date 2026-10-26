@@ -3,6 +3,7 @@
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\CostsController;
 use App\Http\Controllers\CrmController;
 use App\Http\Controllers\DraftController;
@@ -77,6 +78,7 @@ Route::middleware(['auth', 'fresh-password'])->group(function () {
         Route::post('/leads/{business}/audit', [AuditController::class, 'one'])->name('audits.one');
         Route::post('/leads/audit', [AuditController::class, 'many'])->name('audits.many');
         Route::post('/leads/audit-failed', [AuditController::class, 'retryFailed'])->name('audits.retry-failed');
+        Route::post('/inbox/{reply}/read', [CampaignController::class, 'readReply'])->name('replies.read');
         Route::get('/leads/export', [LeadController::class, 'export'])->name('leads.export');
         Route::delete('/leads/{business}', [LeadController::class, 'destroy'])->name('leads.destroy');
         Route::post('/leads/delete', [LeadController::class, 'destroyMany'])->name('leads.destroy-many');
@@ -101,10 +103,12 @@ Route::middleware(['auth', 'fresh-password'])->group(function () {
         Route::put('/outreach', [SettingsController::class, 'updateOutreach'])->name('settings.outreach');
         Route::delete('/outreach', [SettingsController::class, 'resetOutreach'])->name('settings.outreach.reset');
         Route::put('/selling', [SettingsController::class, 'updateSelling'])->name('settings.selling');
-        Route::post('/test/{service}', [SettingsController::class, 'test'])->whereIn('service', ['apify', 'claude', 'millionverifier'])->name('settings.test');
+        Route::post('/test/{service}', [SettingsController::class, 'test'])->whereIn('service', ['apify', 'claude', 'millionverifier', 'instantly'])->name('settings.test');
         Route::put('/crm', [SettingsController::class, 'updateCrm'])->name('settings.crm');
         Route::put('/updates', [SettingsController::class, 'updateAutoUpdate'])->name('settings.updates');
         Route::put('/factsheet', [SettingsController::class, 'updateFactsheet'])->name('settings.factsheet');
+        Route::post('/sending/start', [CampaignController::class, 'start'])->name('sending.start');
+        Route::post('/sending/stop', [CampaignController::class, 'stop'])->name('sending.stop');
         Route::delete('/factsheet', [SettingsController::class, 'resetFactsheet'])->name('settings.factsheet.reset');
         Route::post('/costs-key', [CostsController::class, 'createKey'])->name('settings.costs-key');
         Route::delete('/costs-key', [CostsController::class, 'revokeKey'])->name('settings.costs-key.revoke');

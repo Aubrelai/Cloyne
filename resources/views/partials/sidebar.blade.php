@@ -5,7 +5,7 @@
         ['route' => 'leads', 'label' => 'Leads', 'icon' => 'list'],
         ['route' => 'review', 'label' => 'Review queue', 'icon' => 'review', 'count' => $pendingDrafts ?? 0],
         ['route' => 'campaigns', 'label' => 'Campaigns', 'icon' => 'send'],
-        ['route' => 'inbox', 'label' => 'Inbox', 'icon' => 'inbox'],
+        ['route' => 'inbox', 'label' => 'Inbox', 'icon' => 'inbox', 'count' => $unreadReplies ?? 0],
         ['route' => 'booked', 'label' => 'Booked', 'icon' => 'calendar'],
     ];
 @endphp

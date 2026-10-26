@@ -45,8 +45,20 @@
             </div>
         @endforeach
         <div class="split connection-row">
-            <div><strong>Instantly</strong><div class="caption">Sending and inbox warm-up</div></div>
-            <x-pill tone="neutral">Version 2.0</x-pill>
+            <div><strong>Instantly</strong><div class="caption">Sending and inbox warm-up · <span class="mono">INSTANTLY_API_KEY</span> · switch sending on in <a href="{{ route('campaigns') }}" class="results-link">Campaigns</a></div></div>
+            <div class="btn-row" style="align-items: center">
+                @if (\App\Services\Instantly::isConfigured())
+                    @can('manage-team')
+                        <form method="post" action="{{ route('settings.test', 'instantly') }}">
+                            @csrf
+                            <button type="submit" class="btn btn--ghost btn--sm" data-busy="Testing…">Test</button>
+                        </form>
+                    @endcan
+                    <x-pill tone="success">Connected</x-pill>
+                @else
+                    <x-pill tone="neutral">Not connected</x-pill>
+                @endif
+            </div>
         </div>
         <div class="split connection-row" style="border-bottom: 0">
             <div><strong>LaiQ Digital CRM</strong><div class="caption">Cold-call lists, call results and costs · see CRM connection below</div></div>
@@ -186,7 +198,7 @@
     </section>
 
     @php $o = config('cloyne.outreach'); @endphp
-    <section class="card">
+    <section class="card" id="outreach">
         <div class="card__head">
             <h2 class="card__title">Outreach emails</h2>
             <span class="caption">From {{ $o['sender_name'] }}, {{ $o['sender_title'] }} · written by <span class="mono">{{ config('services.anthropic.draft_model') }}</span></span>

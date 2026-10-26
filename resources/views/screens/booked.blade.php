@@ -5,11 +5,11 @@
 @section('content')
     <div>
         <h1 class="page-title">Booked</h1>
-        <div class="page-sub">Leads with a call booked. Sending them to the LaiQ Digital CRM is built in Step 7.</div>
+        <div class="page-sub">Leads with a call booked: from your callers (CRM call results) and, from version 2.0, email replies. Sending them into the CRM pipeline comes in version 4.0.</div>
     </div>
 
     @if ($bookings->isEmpty())
-        <x-coming-soon title="No booked calls yet" step="Fills up from Step 6 onward">
+        <x-coming-soon title="No booked calls yet" step="Fills up as calls are booked">
             When a lead books a call, it appears here, and Cloyne sends it to the LaiQ Digital CRM with its audit, best-fit package and email thread. Deal stages (showed, quoted, won) come back from the CRM.
         </x-coming-soon>
     @else

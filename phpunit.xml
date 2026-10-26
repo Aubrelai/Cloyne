@@ -35,6 +35,7 @@
         <!-- Never use real API keys in tests: no real searches, audits or charges. -->
         <env name="APIFY_TOKEN" value="" force="true"/>
         <env name="MILLIONVERIFIER_KEY" value="" force="true"/>
+        <env name="INSTANTLY_API_KEY" value="" force="true"/>
         <env name="ANTHROPIC_API_KEY" value="" force="true"/>
         <env name="CLOYNE_SELLING" value="website,ads_crm,scale" force="true"/>
         <env name="CLOYNE_AUTO_DRAFT" value="false" force="true"/>

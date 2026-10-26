@@ -80,6 +80,8 @@ class Drafter
             'to_email' => $contact?->email,
             'subject' => Str::limit(trim((string) ($result['subject'] ?? '')), 120, ''),
             'body' => $this->cleanBody((string) ($result['body'] ?? '')),
+            'follow_up_1' => filled($result['follow_up_1'] ?? null) ? $this->cleanBody((string) $result['follow_up_1']) : null,
+            'follow_up_2' => filled($result['follow_up_2'] ?? null) ? $this->cleanBody((string) $result['follow_up_2']) : null,
             'angle' => Str::limit(trim((string) ($result['angle'] ?? '')), 250),
             'package' => $business->pitchPackage(),
             'model' => $model,
@@ -155,6 +157,10 @@ class Drafter
         - {$cta}
         - Do NOT add a sign-off, name, signature, address or unsubscribe line. Cloyne adds those.
         - Subject line: 2–6 words, lowercase is fine, specific to them, no clickbait, no emoji, no "quick question".
+        - Also write two short follow-ups, sent in the same thread only if they don't reply: follow_up_1 on day 3
+          (25–50 words: one new, concrete reason the gap costs them customers, then the same question and link) and
+          follow_up_2 on day 7 (20–40 words: a polite last note that makes it easy to say no, then the link).
+          Same rules: no greeting line needed beyond "Hi {first name},", no sign-off, nothing invented.
         Never:
         {$never}
         PROMPT;
@@ -196,8 +202,10 @@ class Drafter
                     'angle' => ['type' => 'string', 'description' => 'The one gap this email is built on, in under 12 words.'],
                     'subject' => ['type' => 'string'],
                     'body' => ['type' => 'string', 'description' => 'Greeting through the call to action. No sign-off or signature.'],
+                    'follow_up_1' => ['type' => 'string', 'description' => 'Sent on day 3 if there is no reply, in the same thread. 25-50 words.'],
+                    'follow_up_2' => ['type' => 'string', 'description' => 'Sent on day 7 if there is still no reply. The last note. 20-40 words.'],
                 ],
-                'required' => ['angle', 'subject', 'body'],
+                'required' => ['angle', 'subject', 'body', 'follow_up_1', 'follow_up_2'],
             ],
         ];
     }

@@ -59,11 +59,13 @@ if [ "${1:-}" = "settings" ]; then
     read -rsp "Claude API key: " CLOYNE_ANTHROPIC; echo
     read -rsp "Apify API token: " CLOYNE_APIFY; echo
     read -rsp "MillionVerifier key (optional): " CLOYNE_VERIFIER; echo
-    export CLOYNE_DB_PASSWORD CLOYNE_ANTHROPIC CLOYNE_APIFY CLOYNE_VERIFIER
+    read -rsp "Instantly API key (optional): " CLOYNE_INSTANTLY; echo
+    export CLOYNE_DB_PASSWORD CLOYNE_ANTHROPIC CLOYNE_APIFY CLOYNE_VERIFIER CLOYNE_INSTANTLY
     [ -z "$CLOYNE_DB_PASSWORD" ] || "$PHP" deploy/set-env.php DB_PASSWORD=@CLOYNE_DB_PASSWORD
     [ -z "$CLOYNE_ANTHROPIC" ] || "$PHP" deploy/set-env.php ANTHROPIC_API_KEY=@CLOYNE_ANTHROPIC
     [ -z "$CLOYNE_APIFY" ] || "$PHP" deploy/set-env.php APIFY_TOKEN=@CLOYNE_APIFY
     [ -z "$CLOYNE_VERIFIER" ] || "$PHP" deploy/set-env.php MILLIONVERIFIER_KEY=@CLOYNE_VERIFIER
+    [ -z "$CLOYNE_INSTANTLY" ] || "$PHP" deploy/set-env.php INSTANTLY_API_KEY=@CLOYNE_INSTANTLY
     "$PHP" artisan optimize
     "$PHP" artisan queue:restart >/dev/null || true
     echo "Saved."

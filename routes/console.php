@@ -25,3 +25,9 @@ Schedule::command('cloyne:sync-searches')
 Schedule::command('cloyne:reaudit-stale')
     ->dailyAt('03:30')
     ->withoutOverlapping(30);
+
+// Version 2.0: hand approved emails to Instantly (within each inbox's daily limit) and bring back replies,
+// bounces and opt-outs. Nothing sends while the Owner's switch on the Campaigns screen is off.
+Schedule::command('cloyne:send')
+    ->everyTenMinutes()
+    ->withoutOverlapping(15);

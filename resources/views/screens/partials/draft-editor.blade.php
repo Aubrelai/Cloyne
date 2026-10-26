@@ -96,6 +96,18 @@
 
 {{ \App\Models\Draft::footer() }}</div>
                 </div>
+                <details class="follow-ups" @if ($draft->follow_up_1 || $draft->follow_up_2) open @endif>
+                    <summary>Follow-ups <span class="caption">sent in the same thread only if there's no reply</span></summary>
+                    <div class="field">
+                        <label for="follow_up_1" class="label">Day 3</label>
+                        <textarea id="follow_up_1" name="follow_up_1" class="textarea" rows="3" maxlength="2000" placeholder="{{ $draft->followUps()[0] }}">{{ old('follow_up_1', $draft->follow_up_1) }}</textarea>
+                    </div>
+                    <div class="field">
+                        <label for="follow_up_2" class="label">Day 7</label>
+                        <textarea id="follow_up_2" name="follow_up_2" class="textarea" rows="3" maxlength="2000" placeholder="{{ $draft->followUps()[1] }}">{{ old('follow_up_2', $draft->follow_up_2) }}</textarea>
+                    </div>
+                    <div class="caption">Left empty, Cloyne sends the short default shown in grey.</div>
+                </details>
             </form>
             <div class="split" style="border-top: 1px solid var(--border); padding-top: 16px; flex-wrap: wrap">
                 <div class="btn-row" style="justify-content: flex-start">

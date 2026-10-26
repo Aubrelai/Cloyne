@@ -7,6 +7,7 @@ use App\Models\Setting;
 use App\Services\Apify;
 use App\Services\Claude;
 use App\Services\EmailVerifier;
+use App\Services\Instantly;
 use App\Support\AutoUpdate;
 use App\Support\FriendlyError;
 use Illuminate\Http\RedirectResponse;
@@ -143,6 +144,11 @@ class SettingsController extends Controller
     public function test(string $service, Apify $apify, Claude $claude, EmailVerifier $verifier): RedirectResponse
     {
         try {
+            if ($service === 'instantly') {
+                $inboxes = app(Instantly::class)->testConnection();
+
+                return back()->with('status', 'Instantly works. '.$inboxes.' sending '.str('inbox')->plural($inboxes).' connected.');
+            }
             if ($service === 'millionverifier') {
                 $credits = $verifier->testConnection();
 
@@ -157,7 +163,7 @@ class SettingsController extends Controller
 
             return back()->with('status', 'Claude works. The key is valid.');
         } catch (Throwable $e) {
-            return back()->withErrors(['connection' => FriendlyError::message($e, match ($service) { 'apify' => 'Apify', 'millionverifier' => 'MillionVerifier', default => 'Claude' })]);
+            return back()->withErrors(['connection' => FriendlyError::message($e, match ($service) { 'apify' => 'Apify', 'millionverifier' => 'MillionVerifier', 'instantly' => 'Instantly', default => 'Claude' })]);
         }
     }
 }

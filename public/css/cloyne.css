@@ -462,3 +462,11 @@ th[aria-sort="ascending"] .sort-link, th[aria-sort="descending"] .sort-link { co
 .fact-row .field { margin: 0; }
 .fact-row textarea { resize: vertical; min-height: 60px; }
 @media (max-width: 760px) { .fact-row { grid-template-columns: 1fr; } }
+.follow-ups { border-top: 1px solid var(--border); padding-top: var(--space-3); display: flex; flex-direction: column; gap: var(--space-3); }
+.follow-ups summary { cursor: pointer; font-weight: 600; color: var(--ink); }
+.follow-ups[open] summary { margin-bottom: var(--space-2); }
+.follow-ups .field + .field { margin-top: var(--space-2); }
+.reply { padding: var(--space-3) 0; border-bottom: 1px solid var(--border); }
+.reply:last-of-type { border-bottom: 0; }
+.reply--unread strong { color: var(--signal); }
+.reply__body { margin-top: var(--space-2); white-space: pre-line; font-size: 14px; color: var(--ink); max-width: 72ch; }

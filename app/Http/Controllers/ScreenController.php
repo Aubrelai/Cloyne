@@ -236,14 +236,43 @@ class ScreenController extends Controller
         ]);
     }
 
-    public function campaigns(): View
+    public function campaigns(\App\Services\Sender $sender): View
     {
-        return view('screens.campaigns');
+        $accounts = \App\Services\Instantly::isConfigured()
+            ? \Illuminate\Support\Facades\Cache::remember('instantly.accounts', 120, fn () => rescue(fn () => app(\App\Services\Instantly::class)->accounts(), null, false))
+            : null;
+        $weekAgo = now()->subDays(7);
+
+        return view('screens.campaigns', [
+            'readiness' => $sender->readiness($accounts),
+            'ready' => $sender->isReady($accounts),
+            'on' => \App\Services\Sender::isOn(),
+            'pausedReason' => config('cloyne.settings.sending_paused_reason'),
+            'accounts' => $accounts ?? [],
+            'limitToday' => $accounts ? collect($accounts)->where('sending', true)->count() * (int) config('services.instantly.per_inbox_daily', 30) : 0,
+            'remainingToday' => $accounts ? $sender->remainingToday($accounts) : 0,
+            'waiting' => Draft::where('status', 'approved')->whereNull('send_status')->count(),
+            'health' => \App\Services\Sender::health(),
+            'week' => [
+                'sent' => Draft::where('queued_at', '>=', $weekAgo)->count(),
+                'replied' => Draft::where('queued_at', '>=', $weekAgo)->where('send_status', 'replied')->count(),
+            ],
+            'recent' => Draft::whereNotNull('send_status')->with('business')->latest('queued_at')->limit(25)->get(),
+        ]);
     }
 
-    public function inbox(): View
+    public function inbox(Request $request): View
     {
-        return view('screens.inbox');
+        $show = $request->query('show') === 'all' ? 'all' : 'people';
+
+        return view('screens.inbox', [
+            'show' => $show,
+            'replies' => \App\Models\Reply::with('business')
+                ->when($show === 'people', fn ($q) => $q->where('is_auto_reply', false))
+                ->latest('received_at')->paginate(30)->withQueryString(),
+            'unread' => \App\Models\Reply::whereNull('read_at')->where('is_auto_reply', false)->count(),
+            'sendingOn' => \App\Services\Sender::isOn(),
+        ]);
     }
 
     public function booked(): View

@@ -9,7 +9,7 @@ use Illuminate\Support\Str;
 
 /**
  * A first outreach email for one lead, written by Claude and checked by a person.
- * Nothing is ever sent without status "approved" (sending is Step 5).
+ * Nothing is ever sent without status "approved" (sending: App\Services\Sender, version 2.0).
  */
 class Draft extends Model
 {
@@ -21,6 +21,15 @@ class Draft extends Model
         'failed' => 'Failed',
     ];
 
+    /** Where an approved email is in sending (version 2.0). null = not handed to Instantly yet. */
+    public const SEND_STATUSES = [
+        'queued' => 'Sending',
+        'replied' => 'Replied',
+        'bounced' => 'Bounced',
+        'unsubscribed' => 'Opted out',
+        'finished' => 'Sequence done',
+    ];
+
     /** Statuses that mean the lead already has a draft in play (don't write another). */
     public const ACTIVE = ['writing', 'pending', 'approved'];
 
@@ -30,7 +39,7 @@ class Draft extends Model
 
     protected function casts(): array
     {
-        return ['reviewed_at' => 'datetime', 'edited' => 'boolean'];
+        return ['reviewed_at' => 'datetime', 'queued_at' => 'datetime', 'edited' => 'boolean'];
     }
 
     public function business(): BelongsTo
@@ -51,6 +60,28 @@ class Draft extends Model
     public function scopeStatus(Builder $query, string $status): Builder
     {
         return $query->where('drafts.status', $status);
+    }
+
+    /**
+     * The follow-ups sent on day 3 and day 7 if there is no reply. A draft written before 2.0 has none,
+     * so these short, safe notes stand in (no claims, no prices).
+     *
+     * @return array{0: string, 1: string}
+     */
+    public function followUps(): array
+    {
+        $o = config('cloyne.outreach');
+        $link = $o['booking_url'] ? "\n{$o['booking_url']}" : '';
+
+        return [
+            filled($this->follow_up_1) ? $this->follow_up_1 : "Just bringing this back to the top of your inbox in case it got buried. Worth a short call?{$link}",
+            filled($this->follow_up_2) ? $this->follow_up_2 : "Last note from me. If now isn't the right time, no problem at all. If it ever is, the link below books a short call.{$link}",
+        ];
+    }
+
+    public function sendStatusLabel(): ?string
+    {
+        return $this->send_status ? (self::SEND_STATUSES[$this->send_status] ?? ucfirst($this->send_status)) : null;
     }
 
     public function statusLabel(): string
