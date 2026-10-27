@@ -234,17 +234,23 @@ class Sender
         $auto = (int) ($email['is_auto_reply'] ?? 0) === 1;
         $optOut = ! $auto && Reply::isOptOut($text);
 
-        Reply::create([
+        $reply = Reply::create([
             'business_id' => $draft?->business_id,
             'draft_id' => $draft?->id,
             'instantly_email_id' => mb_substr($id, 0, 64),
             'from_email' => mb_substr($from, 0, 250),
+            'eaccount' => isset($email['eaccount']) ? mb_substr((string) $email['eaccount'], 0, 250) : null,
             'subject' => mb_substr((string) ($email['subject'] ?? ''), 0, 250),
             'body' => mb_substr($text, 0, 20000),
             'is_auto_reply' => $auto,
             'opt_out' => $optOut,
             'received_at' => isset($email['timestamp_email']) ? Carbon::parse($email['timestamp_email']) : now(),
         ]);
+
+        // v3.0: sort it and draft an answer from the fact sheet (a person approves before anything goes).
+        if (! $auto && ReplyAgent::isOn() && Claude::isConfigured()) {
+            \App\Jobs\HandleReply::dispatch($reply);
+        }
 
         if ($draft && ! $auto) {
             $draft->update(['send_status' => $optOut ? 'unsubscribed' : 'replied']);

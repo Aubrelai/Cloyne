@@ -474,3 +474,7 @@ th[aria-sort="ascending"] .sort-link, th[aria-sort="descending"] .sort-link { co
 .script__opener { margin: 0; font-size: 14px; line-height: 22px; color: var(--ink); }
 .script__objection { font-size: 13px; line-height: 20px; color: var(--ink-muted); }
 .script__objection strong { color: var(--ink); font-weight: 600; }
+.reply__answer { margin-top: var(--space-3); padding: var(--space-3); border-radius: var(--radius-sm); background: var(--surface-raised); display: flex; flex-direction: column; gap: var(--space-2); }
+.reply__answer:empty { display: none; }
+.reply__form { display: flex; flex-direction: column; gap: var(--space-2); }
+.reply__sent { white-space: pre-line; font-size: 13px; color: var(--ink-muted); }

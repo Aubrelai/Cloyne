@@ -263,15 +263,18 @@ class ScreenController extends Controller
 
     public function inbox(Request $request): View
     {
-        $show = $request->query('show') === 'all' ? 'all' : 'people';
+        $show = in_array($request->query('show'), ['all', 'todo'], true) ? $request->query('show') : 'people';
 
         return view('screens.inbox', [
             'show' => $show,
-            'replies' => \App\Models\Reply::with('business')
-                ->when($show === 'people', fn ($q) => $q->where('is_auto_reply', false))
+            'replies' => \App\Models\Reply::with(['business', 'answeredBy'])
+                ->when($show !== 'all', fn ($q) => $q->where('is_auto_reply', false))
+                ->when($show === 'todo', fn ($q) => $q->where(fn ($q) => $q->whereNull('answer_status')->orWhereIn('answer_status', ['drafted', 'failed']))->where('opt_out', false))
                 ->latest('received_at')->paginate(30)->withQueryString(),
             'unread' => \App\Models\Reply::whereNull('read_at')->where('is_auto_reply', false)->count(),
             'sendingOn' => \App\Services\Sender::isOn(),
+            'agentOn' => \App\Services\ReplyAgent::isOn(),
+            'canSend' => \App\Services\Instantly::isConfigured(),
         ]);
     }
 

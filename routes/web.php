@@ -8,6 +8,7 @@ use App\Http\Controllers\CostsController;
 use App\Http\Controllers\CrmController;
 use App\Http\Controllers\DraftController;
 use App\Http\Controllers\LeadController;
+use App\Http\Controllers\ReplyController;
 use App\Http\Controllers\ScreenController;
 use App\Http\Controllers\SavedViewController;
 use App\Http\Controllers\SearchController;
@@ -80,6 +81,10 @@ Route::middleware(['auth', 'fresh-password'])->group(function () {
         Route::post('/leads/audit', [AuditController::class, 'many'])->name('audits.many');
         Route::post('/leads/audit-failed', [AuditController::class, 'retryFailed'])->name('audits.retry-failed');
         Route::post('/inbox/{reply}/read', [CampaignController::class, 'readReply'])->name('replies.read');
+        Route::post('/inbox/{reply}/draft', [ReplyController::class, 'draft'])->name('replies.draft');
+        Route::post('/inbox/{reply}/send', [ReplyController::class, 'send'])->name('replies.send');
+        Route::post('/inbox/{reply}/handled', [ReplyController::class, 'handled'])->name('replies.handled');
+        Route::post('/inbox/{reply}/booked', [ReplyController::class, 'booked'])->name('replies.booked');
         Route::get('/leads/export', [LeadController::class, 'export'])->name('leads.export');
         Route::delete('/leads/{business}', [LeadController::class, 'destroy'])->name('leads.destroy');
         Route::post('/leads/delete', [LeadController::class, 'destroyMany'])->name('leads.destroy-many');
@@ -110,6 +115,7 @@ Route::middleware(['auth', 'fresh-password'])->group(function () {
         Route::put('/factsheet', [SettingsController::class, 'updateFactsheet'])->name('settings.factsheet');
         Route::post('/sending/start', [CampaignController::class, 'start'])->name('sending.start');
         Route::post('/sending/stop', [CampaignController::class, 'stop'])->name('sending.stop');
+        Route::put('/reply-agent', [ReplyController::class, 'toggle'])->name('reply-agent');
         Route::delete('/factsheet', [SettingsController::class, 'resetFactsheet'])->name('settings.factsheet.reset');
         Route::post('/costs-key', [CostsController::class, 'createKey'])->name('settings.costs-key');
         Route::delete('/costs-key', [CostsController::class, 'revokeKey'])->name('settings.costs-key.revoke');

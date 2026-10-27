@@ -36,6 +36,7 @@ class Setting extends Model
         'sending_on' => 'cloyne.settings.sending_on',
         'sending_paused_reason' => 'cloyne.settings.sending_paused_reason',
         'instantly_campaign' => 'cloyne.settings.instantly_campaign',
+        'reply_agent_on' => 'cloyne.settings.reply_agent_on',
     ];
 
     public static function put(string $key, mixed $value): void

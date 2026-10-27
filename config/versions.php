@@ -7,6 +7,12 @@
 */
 
 return [
+    ['version' => '3.0', 'date' => '2026-10-27', 'title' => 'Reply agent (built, switched off)', 'notes' => [
+        'With AI answers on (Inbox, Owner), each reply is sorted (interested, question, not now, opt-out) and Claude drafts an answer using only the fact sheet.',
+        'A person approves every answer; Approve and send replies in the same thread from the inbox that received it.',
+        'Prices, complaints, legal questions, anything the fact sheet doesn\'t cover and the third reply in a conversation are marked Needs you, with no AI answer.',
+        'Inbox: To answer view, I\'ll handle it, and Booked a call (moves the lead to Booked).',
+    ]],
     ['version' => '2.1', 'date' => '2026-10-27', 'title' => 'Call scripts for the CRM', 'notes' => [
         'Claude writes a call script for every lead on (or headed to) the CRM call lists: a 30-second opener built on the lead\'s own audit, and calm answers to 4–5 likely pushbacks.',
         'Scripts go to the CRM with the score and package, and show on the lead in Cloyne with a Rewrite button.',

@@ -132,6 +132,17 @@ class Instantly
         return ['items' => $page['items'] ?? [], 'next' => $page['next_starting_after'] ?? null];
     }
 
+    /** Answer a reply in its thread, from the inbox that received it (v3.0). */
+    public function replyTo(string $emailId, string $eaccount, string $subject, string $text): void
+    {
+        $this->post('/emails/reply', [
+            'reply_to_uuid' => $emailId,
+            'eaccount' => $eaccount,
+            'subject' => $subject,
+            'body' => ['text' => $text, 'html' => self::html($text)],
+        ]);
+    }
+
     /** Never email this address again from any campaign. */
     public function block(string $email): void
     {

@@ -12,12 +12,22 @@ class Reply extends Model
 
     protected function casts(): array
     {
-        return ['received_at' => 'datetime', 'read_at' => 'datetime', 'is_auto_reply' => 'boolean', 'opt_out' => 'boolean'];
+        return ['received_at' => 'datetime', 'read_at' => 'datetime', 'answered_at' => 'datetime', 'is_auto_reply' => 'boolean', 'opt_out' => 'boolean', 'needs_person' => 'boolean'];
     }
 
     public function business(): BelongsTo
     {
         return $this->belongsTo(Business::class);
+    }
+
+    public function categoryLabel(): ?string
+    {
+        return $this->category ? (\App\Services\ReplyAgent::CATEGORIES[$this->category] ?? ucfirst($this->category)) : null;
+    }
+
+    public function answeredBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'answered_by');
     }
 
     public function draft(): BelongsTo
