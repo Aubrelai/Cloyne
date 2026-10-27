@@ -24,6 +24,8 @@ use Illuminate\Validation\Rule;
  *   POST /api/crm/call-list/added  CRM says which of those it added, with its own IDs.
  *   POST /api/crm/calls            CRM sends call results (no answer, booked, ...).
  *   GET  /api/crm/users            Emails of everyone who can sign in to Cloyne.
+ *   GET  /api/crm/booked           v4.0: booked calls for the CRM pipeline, with audit, emails and calls.
+ *   POST /api/crm/deals            v4.0: the CRM reports each deal's stage (showed, quoted, won, lost…).
  */
 class CrmController extends Controller
 {
@@ -218,8 +220,8 @@ class CrmController extends Controller
                 $saved++;
 
                 match ($row['outcome']) {
-                    'booked' => $business->update(['stage' => 'booked', 'exclude_reason' => null]),
-                    'not_interested' => $business->stage === 'booked' ? null : $business->exclude('Not interested'),
+                    'booked' => $business->markBooked('call'),
+                    'not_interested' => in_array($business->stage, ['booked', 'won', 'lost'], true) ? null : $business->exclude('Not interested'),
                     default => $business->touch(),
                 };
             }
@@ -239,6 +241,94 @@ class CrmController extends Controller
             'users' => User::orderBy('email')->pluck('email')
                 ->map(fn ($email) => ['email' => mb_strtolower($email)])->values(),
         ]);
+    }
+
+    /** v4.0 Cloyne → CRM: booked calls, changed since a time, with everything the closer needs. */
+    public function booked(Request $request): JsonResponse
+    {
+        $request->validate(['since' => ['nullable', 'date'], 'limit' => ['nullable', 'integer', 'min:1', 'max:500']]);
+
+        $rows = Business::whereNotNull('booked_at')
+            ->when($request->filled('since'), fn ($q) => $q->where('updated_at', '>', Carbon::parse($request->query('since'))))
+            ->with(['latestAudit', 'calls', 'drafts' => fn ($d) => $d->whereNotNull('send_status')])
+            ->orderBy('updated_at')->orderBy('id')
+            ->limit((int) $request->query('limit', 200))->get();
+
+        return response()->json([
+            'booked' => $rows->map(fn (Business $b) => $this->result($b) + [
+                'booked_at' => optional($b->booked_at)->toIso8601String(),
+                'booked_via' => $b->booked_via,
+                'crm_deal_id' => $b->crm_deal_id,
+                'deal_stage' => $b->deal_stage,
+                'audit' => collect($b->latestAudit?->checks ?? [])->map(fn ($c) => [
+                    'title' => $c['title'] ?? '', 'detail' => $c['detail'] ?? '', 'has' => (bool) ($c['passed'] ?? $c['found'] ?? false),
+                ])->values(),
+                'thread' => $this->thread($b),
+                'calls' => $b->calls->map(fn ($c) => [
+                    'outcome' => $c->outcome, 'caller' => $c->caller, 'notes' => $c->notes, 'called_at' => optional($c->called_at)->toIso8601String(),
+                ])->values(),
+            ])->values(),
+            'next_since' => optional($rows->last()?->updated_at)->toIso8601String(),
+            'deal_stages' => array_keys(Business::DEAL_STAGES),
+        ]);
+    }
+
+    /** v4.0 CRM → Cloyne: where each deal stands. won → the lead becomes a client; lost → lost. */
+    public function deals(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'deals' => ['required', 'array', 'min:1', 'max:500'],
+            'deals.*.cloyne_id' => ['required_without:deals.*.crm_id', 'nullable', 'integer'],
+            'deals.*.crm_id' => ['required_without:deals.*.cloyne_id', 'nullable', 'string', 'max:64'],
+            'deals.*.crm_deal_id' => ['nullable', 'string', 'max:64'],
+            'deals.*.stage' => ['required', Rule::in(array_keys(Business::DEAL_STAGES))],
+            'deals.*.package' => ['nullable', 'string', 'max:40'],
+            'deals.*.value' => ['nullable', 'numeric', 'min:0', 'max:1000000'],
+            'deals.*.note' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $saved = 0;
+        $unknown = [];
+        foreach ($data['deals'] as $row) {
+            $business = ! empty($row['cloyne_id']) ? Business::find($row['cloyne_id']) : Business::where('crm_id', $row['crm_id'])->first();
+            if (! $business) {
+                $unknown[] = $row['cloyne_id'] ?? $row['crm_id'];
+
+                continue;
+            }
+            $package = $row['package'] ?? null;
+            if ($package && ! array_key_exists($package, Business::packages())) {
+                // Accept "Growth" or "Growth — Ads + CRM" as well as the key.
+                $package = collect(Business::packages())->search(fn ($p) => in_array(mb_strtolower($package), [mb_strtolower($p['short'] ?? ''), mb_strtolower($p['name'])], true)) ?: null;
+            }
+            $business->update(array_filter([
+                'crm_deal_id' => $row['crm_deal_id'] ?? null,
+                'deal_package' => $package,
+                'deal_value' => $row['value'] ?? null,
+                'deal_note' => isset($row['note']) ? mb_substr($row['note'], 0, 500) : null,
+            ], fn ($v) => ! is_null($v)) + [
+                'deal_stage' => $row['stage'],
+                'deal_updated_at' => now(),
+                'booked_at' => $business->booked_at ?? now(),
+                'stage' => match ($row['stage']) { 'won' => 'won', 'lost' => 'lost', default => 'booked' },
+            ]);
+            $saved++;
+        }
+
+        return response()->json(['saved' => $saved, 'unknown' => $unknown]);
+    }
+
+    /** The emails between LaiQ and this business, oldest first. */
+    private function thread(Business $b): array
+    {
+        $sent = $b->drafts->map(fn ($d) => ['direction' => 'sent', 'at' => optional($d->queued_at)->toIso8601String(), 'subject' => $d->subject, 'text' => $d->body]);
+        $received = \App\Models\Reply::where('business_id', $b->id)->where('is_auto_reply', false)->orderBy('received_at')->get()
+            ->flatMap(fn ($r) => array_filter([
+                ['direction' => 'received', 'at' => optional($r->received_at)->toIso8601String(), 'subject' => $r->subject, 'text' => $r->body],
+                $r->answer_status === 'sent' ? ['direction' => 'sent', 'at' => optional($r->answered_at)->toIso8601String(), 'subject' => 'Re: '.$r->subject, 'text' => $r->answer] : null,
+            ]));
+
+        return $sent->concat($received)->sortBy('at')->values()->all();
     }
 
     /** One lead as the CRM sees it. */

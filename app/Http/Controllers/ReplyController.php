@@ -77,7 +77,7 @@ class ReplyController extends Controller
     public function booked(Reply $reply): RedirectResponse
     {
         abort_unless($reply->business, 404);
-        $reply->business->update(['stage' => 'booked', 'exclude_reason' => null]);
+        $reply->business->markBooked('email');
         $reply->update(['category' => 'interested', 'read_at' => $reply->read_at ?? now()]);
 
         return back()->with('status', $reply->business->displayName().' marked as booked. It goes to the CRM pipeline.');

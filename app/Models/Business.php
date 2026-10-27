@@ -20,6 +20,8 @@ class Business extends Model
         'emailed' => 'Emailed',
         'replied' => 'Replied',
         'booked' => 'Booked',
+        'won' => 'Client',
+        'lost' => 'Lost',
         'excluded' => 'Excluded',
     ];
 
@@ -59,6 +61,9 @@ class Business extends Model
             'is_chain' => 'boolean',
             'call_script' => 'array',
             'call_script_at' => 'datetime',
+            'booked_at' => 'datetime',
+            'deal_updated_at' => 'datetime',
+            'deal_value' => 'decimal:2',
         ];
     }
 
@@ -70,6 +75,33 @@ class Business extends Model
     public function contacts(): HasMany
     {
         return $this->hasMany(Contact::class);
+    }
+
+    /** Deal stages the CRM reports back (v4.0), in order, with the word shown. */
+    public const DEAL_STAGES = [
+        'booked' => 'Call booked',
+        'showed' => 'Showed up',
+        'no_show' => 'No-show',
+        'quoted' => 'Quoted',
+        'won' => 'Won',
+        'lost' => 'Lost',
+    ];
+
+    /** A call was booked (by a caller, from an email reply, or by hand). It goes to the CRM pipeline. */
+    public function markBooked(string $via): void
+    {
+        $this->update([
+            'stage' => 'booked',
+            'exclude_reason' => null,
+            'booked_at' => $this->booked_at ?? now(),
+            'booked_via' => $this->booked_via ?? $via,
+            'deal_stage' => $this->deal_stage ?? 'booked',
+        ]);
+    }
+
+    public function dealStageLabel(): ?string
+    {
+        return $this->deal_stage ? (self::DEAL_STAGES[$this->deal_stage] ?? ucfirst($this->deal_stage)) : null;
     }
 
     public function calls(): HasMany
@@ -115,7 +147,7 @@ class Business extends Model
             ->whereNull('crm_id')
             ->whereNotNull('phone')
             ->whereNotNull('score')
-            ->whereNotIn('stage', ['excluded', 'booked', 'emailed', 'replied'])
+            ->whereNotIn('stage', ['excluded', 'booked', 'won', 'lost', 'emailed', 'replied'])
             ->where(fn ($q) => $q->where('score', '>=', $minScore)
                 ->when($always, fn ($q) => $q->orWhereIn('package', $always)));
     }
@@ -290,7 +322,7 @@ class Business extends Model
             ->joinSub($latest, 'last_audit', 'last_audit.business_id', '=', 'businesses.id')
             ->where('last_audit.last_audited_at', '<', now()->subDays($days))
             ->whereNotNull('businesses.score')
-            ->whereNotIn('businesses.stage', ['excluded', 'booked'])
+            ->whereNotIn('businesses.stage', ['excluded', 'booked', 'won', 'lost'])
             ->where(fn ($q) => $q->whereNull('businesses.audit_status')->orWhere('businesses.audit_status', '!=', 'queued'))
             ->orderBy('last_audit.last_audited_at');
     }

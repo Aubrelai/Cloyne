@@ -104,7 +104,7 @@ class Sender
 
         $sent = 0;
         $drafts = Draft::where('status', 'approved')->whereNull('send_status')->whereNotNull('to_email')
-            ->whereHas('business', fn ($b) => $b->whereNotIn('stage', ['excluded', 'booked', 'replied'])->whereNull('crm_id'))
+            ->whereHas('business', fn ($b) => $b->whereNotIn('stage', ['excluded', 'booked', 'won', 'lost', 'replied'])->whereNull('crm_id'))
             ->with(['business', 'contact'])->orderBy('reviewed_at')->limit($this->remainingToday($accounts))->get();
 
         foreach ($drafts as $draft) {
@@ -215,7 +215,7 @@ class Sender
         match ($state) {
             'bounced' => Contact::where('email', $draft->to_email)->update(['email_status' => 'bounced']),
             'unsubscribed' => $this->optOut($draft->business, $draft->to_email),
-            'replied' => $draft->business->stage === 'booked' ? null : $draft->business->update(['stage' => 'replied']),
+            'replied' => in_array($draft->business->stage, ['booked', 'won', 'lost'], true) ? null : $draft->business->update(['stage' => 'replied']),
             default => null,
         };
 
@@ -254,7 +254,7 @@ class Sender
 
         if ($draft && ! $auto) {
             $draft->update(['send_status' => $optOut ? 'unsubscribed' : 'replied']);
-            $optOut ? $this->optOut($draft->business, $from) : ($draft->business->stage === 'booked' ? null : $draft->business->update(['stage' => 'replied']));
+            $optOut ? $this->optOut($draft->business, $from) : (in_array($draft->business->stage, ['booked', 'won', 'lost'], true) ? null : $draft->business->update(['stage' => 'replied']));
         }
 
         return true;

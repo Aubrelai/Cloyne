@@ -37,13 +37,14 @@ class V19Test extends TestCase
 
         $this->logCall($roof1, 'no_answer', 'Jay');
         $this->logCall($roof1, 'booked', 'Jay');
+        $roof1->markBooked('call');
         $this->logCall($roof2, 'not_interested', 'Mia');
         $this->logCall($gym, 'voicemail', 'Mia');
         ApiCost::create(['service' => 'claude', 'purpose' => 'audit', 'model' => 'm', 'amount' => 3.5]);
 
         $r = Results::month(now());
 
-        $this->assertSame([4, 3, 2, 3, 2, 1], array_column($r['funnel'], 'count'));
+        $this->assertSame([4, 3, 2, 3, 2, 1, 0], array_column($r['funnel'], 'count'));
         $this->assertSame(['caller' => 'Jay', 'calls' => 2, 'talked' => 1, 'booked' => 1, 'rate' => 50], $r['callers']->first());
         $this->assertSame(['caller' => 'Mia', 'calls' => 2, 'talked' => 1, 'booked' => 0, 'rate' => 0], $r['callers']->last());
         $this->assertSame(['category' => 'Roofers', 'leads' => 2, 'hot' => 2, 'called' => 2, 'booked' => 1], $r['categories']->first());
@@ -54,10 +55,11 @@ class V19Test extends TestCase
     {
         $lead = $this->lead('Roof One', 'Roofers', 80);
         $this->logCall($lead, 'booked', 'Jay');
+        $lead->markBooked('call');
 
         $this->get('/')->assertOk()
             ->assertSee("What's working", false)
-            ->assertSeeInOrder(['Found', 'Audited', 'Hot (60+)', 'Called', 'Talked', 'Booked'])
+            ->assertSeeInOrder(['Found', 'Audited', 'Hot (60+)', 'Called', 'Talked', 'Booked', 'Won'])
             ->assertSee('Jay')
             ->assertSee('100% of talked');
     }

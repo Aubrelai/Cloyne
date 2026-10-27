@@ -281,7 +281,9 @@ class ScreenController extends Controller
     public function booked(): View
     {
         return view('screens.booked', [
-            'bookings' => Business::where('stage', 'booked')->with('primaryContact')->latest('updated_at')->get(),
+            'bookings' => Business::where(fn ($q) => $q->whereIn('stage', ['booked', 'won', 'lost'])->orWhereNotNull('booked_at'))
+                ->with('primaryContact')->orderByRaw('coalesce(booked_at, updated_at) desc')->get(),
+            'wonThisMonth' => Business::where('deal_stage', 'won')->where('deal_updated_at', '>=', now()->startOfMonth()),
         ]);
     }
 

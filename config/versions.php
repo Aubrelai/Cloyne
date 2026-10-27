@@ -7,6 +7,12 @@
 */
 
 return [
+    ['version' => '4.0', 'date' => '2026-10-27', 'title' => 'Full CRM loop', 'notes' => [
+        'Every booked call, from a caller or from an email reply ("Booked a call" in the Inbox), goes to the CRM pipeline with its audit, package, email thread and call notes.',
+        'The CRM reports back how each deal goes: showed up, no-show, quoted, won or lost, plus the package sold and its monthly value.',
+        'Booked screen shows each deal\'s stage and what was sold; the Dashboard funnel now ends in Won, with the new monthly revenue.',
+        'Won and lost businesses never go back onto call lists or into email.',
+    ]],
     ['version' => '3.0', 'date' => '2026-10-27', 'title' => 'Reply agent (built, switched off)', 'notes' => [
         'With AI answers on (Inbox, Owner), each reply is sorted (interested, question, not now, opt-out) and Claude drafts an answer using only the fact sheet.',
         'A person approves every answer; Approve and send replies in the same thread from the inbox that received it.',

@@ -27,7 +27,7 @@ class Results
         $calls = Call::whereBetween('called_at', [$from, $to]);
         $called = (clone $calls)->distinct()->count('business_id');
         $talked = (clone $calls)->whereIn('outcome', self::TALKED)->distinct()->count('business_id');
-        $booked = (clone $calls)->where('outcome', 'booked')->distinct()->count('business_id');
+        $booked = Business::whereBetween('booked_at', [$from, $to])->count();
 
         $funnel = [
             ['key' => 'found', 'label' => 'Found', 'count' => Business::whereBetween('created_at', [$from, $to])->count()],
@@ -36,6 +36,7 @@ class Results
             ['key' => 'called', 'label' => 'Called', 'count' => $called],
             ['key' => 'talked', 'label' => 'Talked', 'count' => $talked],
             ['key' => 'booked', 'label' => 'Booked', 'count' => $booked],
+            ['key' => 'won', 'label' => 'Won', 'count' => Business::where('deal_stage', 'won')->whereBetween('deal_updated_at', [$from, $to])->count()],
         ];
 
         $cost = ApiCost::monthTotals($month)['total'];
@@ -47,6 +48,7 @@ class Results
             'categories' => self::categories($from, $to, $hot),
             'cost' => $cost,
             'cost_per_booked' => $booked > 0 ? round($cost / $booked, 2) : null,
+            'won_value' => (float) Business::where('deal_stage', 'won')->whereBetween('deal_updated_at', [$from, $to])->sum('deal_value'),
             'calls' => (clone $calls)->count(),
         ];
     }

@@ -478,3 +478,4 @@ th[aria-sort="ascending"] .sort-link, th[aria-sort="descending"] .sort-link { co
 .reply__answer:empty { display: none; }
 .reply__form { display: flex; flex-direction: column; gap: var(--space-2); }
 .reply__sent { white-space: pre-line; font-size: 13px; color: var(--ink-muted); }
+.funnel__fill--success { background: var(--success); }

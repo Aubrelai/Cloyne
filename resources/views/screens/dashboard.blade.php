@@ -136,6 +136,7 @@
             <span class="caption">
                 ${{ number_format($results['cost'], 2) }} on Apify and Claude
                 @if ($results['cost_per_booked']) · <strong class="mono">${{ number_format($results['cost_per_booked'], 2) }}</strong> per booked call @endif
+                @if ($results['won_value'] > 0) · won <strong class="mono">${{ number_format($results['won_value']) }}/mo</strong> @endif
             </span>
         </div>
         @php $top = max(1, $results['funnel'][0]['count']); @endphp
@@ -144,7 +145,7 @@
                 @php $prev = $loop->first ? null : $results['funnel'][$loop->index - 1]['count']; @endphp
                 <li class="funnel__step">
                     <span class="funnel__label">{{ $step['label'] }}</span>
-                    <span class="funnel__bar"><span @class(['funnel__fill', 'funnel__fill--brand' => $step['key'] === 'booked']) style="width: {{ max(1, round($step['count'] / $top * 100)) }}%"></span></span>
+                    <span class="funnel__bar"><span @class(['funnel__fill', 'funnel__fill--brand' => $step['key'] === 'booked', 'funnel__fill--success' => $step['key'] === 'won']) style="width: {{ max(1, round($step['count'] / $top * 100)) }}%"></span></span>
                     <span class="mono funnel__count">{{ number_format($step['count']) }}</span>
                     <span class="caption funnel__rate">@if ($prev && $step['count'] <= $prev){{ round($step['count'] / $prev * 100) }}% of {{ Str::lower($results['funnel'][$loop->index - 1]['label']) }}@endif</span>
                 </li>
