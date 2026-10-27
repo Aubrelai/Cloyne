@@ -31,3 +31,8 @@ Schedule::command('cloyne:reaudit-stale')
 Schedule::command('cloyne:send')
     ->everyTenMinutes()
     ->withoutOverlapping(15);
+
+// v2.1: call scripts for leads on (or headed to) the CRM's call lists that don't have one yet, 50 an hour.
+Schedule::command('cloyne:write-scripts')
+    ->hourly()
+    ->withoutOverlapping(30);

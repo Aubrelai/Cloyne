@@ -7,6 +7,11 @@
 */
 
 return [
+    ['version' => '2.1', 'date' => '2026-10-27', 'title' => 'Call scripts for the CRM', 'notes' => [
+        'Claude writes a call script for every lead on (or headed to) the CRM call lists: a 30-second opener built on the lead\'s own audit, and calm answers to 4–5 likely pushbacks.',
+        'Scripts go to the CRM with the score and package, and show on the lead in Cloyne with a Rewrite button.',
+        'Same rules as the emails: no prices, no promised results, no fake familiarity.',
+    ]],
     ['version' => '2.0', 'date' => '2026-10-26', 'title' => 'Sending (built, switched off)', 'notes' => [
         'Campaigns: approved emails go out through Instantly as a 3-email sequence (day 0, 3, 7) on weekdays, at most 30 a day per inbox. Any reply stops it.',
         'Nothing sends until the checklist is done (Instantly key, inboxes connected, warm-up score 80+, mailing address) and the Owner clicks Start sending.',

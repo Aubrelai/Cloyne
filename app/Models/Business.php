@@ -57,6 +57,8 @@ class Business extends Model
             'rating' => 'decimal:1',
             'license_expires_on' => 'date',
             'is_chain' => 'boolean',
+            'call_script' => 'array',
+            'call_script_at' => 'datetime',
         ];
     }
 

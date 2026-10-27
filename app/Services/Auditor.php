@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\WriteCallScript;
 use App\Jobs\WriteDraft;
 use App\Models\Audit;
 use App\Models\Business;
@@ -80,6 +81,11 @@ class Auditor
         if (! $disqualified && config('services.anthropic.auto_draft')
             && Business::whereKey($business->id)->draftable()->exists()) {
             WriteDraft::queueFor([$business]);
+        }
+
+        // Going to the CRM's callers? Write (or refresh) its call script from this audit.
+        if (! $disqualified && config('services.anthropic.auto_script') && WriteCallScript::wanted($business->fresh())) {
+            WriteCallScript::dispatch($business);
         }
 
         return $audit;

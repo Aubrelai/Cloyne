@@ -281,6 +281,14 @@ class CrmController extends Controller
             'audited_at' => optional($audit?->audited_at)->toIso8601String(),
             'updated_at' => optional($b->updated_at)->toIso8601String(),
             'cloyne_url' => route('leads', ['lead' => $b->id]),
+            // v2.1: what the caller says. null until written (a few minutes after the audit).
+            'call_script' => $b->call_script ? [
+                'opener' => $b->call_script['opener'] ?? '',
+                'objections' => $b->call_script['objections'] ?? [],
+                'goal' => $b->call_script['goal'] ?? 'Book a 15-minute strategy call',
+                'booking_url' => $b->call_script['booking_url'] ?? config('cloyne.outreach.booking_url'),
+                'written_at' => optional($b->call_script_at)->toIso8601String(),
+            ] : null,
         ];
     }
 

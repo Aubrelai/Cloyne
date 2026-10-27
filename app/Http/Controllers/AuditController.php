@@ -93,4 +93,18 @@ class AuditController extends Controller
             ? 'Retrying '.$count.' '.str('audit')->plural($count).' in the background.'
             : 'No failed audits to retry.');
     }
+
+    /** Write (or rewrite) this lead's call script now, in the background. */
+    public function script(Business $business): RedirectResponse
+    {
+        if (! Claude::isConfigured()) {
+            return back()->withErrors(['audit' => 'Add your Claude API key first.']);
+        }
+        if (is_null($business->score)) {
+            return back()->withErrors(['audit' => 'Audit this lead first: the script is built from its audit.']);
+        }
+        \App\Jobs\WriteCallScript::dispatch($business);
+
+        return back()->with('status', 'Writing the call script. Refresh in a minute.');
+    }
 }

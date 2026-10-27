@@ -45,6 +45,9 @@ return [
         'draft_model' => env('ANTHROPIC_DRAFT_MODEL', 'claude-sonnet-5-5'),
         // Write a draft automatically when an audit finds a hot lead with an email.
         'auto_draft' => (bool) env('CLOYNE_AUTO_DRAFT', true),
+        // v2.1: call scripts for the CRM's callers (cheap model; one per lead after its audit).
+        'script_model' => env('ANTHROPIC_SCRIPT_MODEL', 'claude-haiku-5-5'),
+        'auto_script' => (bool) env('CLOYNE_AUTO_SCRIPT', true),
         // Dollars per million tokens [input, output], for Cloyne's cost tracking (Settings and the CRM Profit page).
         // From https://platform.claude.com/docs/en/about-claude/pricing (October 2026). Update if Anthropic changes them.
         'prices' => [

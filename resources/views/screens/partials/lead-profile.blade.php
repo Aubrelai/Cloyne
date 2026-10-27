@@ -77,6 +77,27 @@
             @endif
         </dl>
 
+        @if ($lead->call_script || ($lead->score !== null && $lead->phone))
+            <h3 class="profile__subhead">Call script <span class="caption">shown to callers in the CRM</span></h3>
+            @if ($lead->call_script)
+                <div class="script">
+                    <p class="script__opener">{{ $lead->call_script['opener'] ?? '' }}</p>
+                    @foreach ($lead->call_script['objections'] ?? [] as $o)
+                        <div class="script__objection"><strong>"{{ $o['they_say'] }}"</strong> → {{ $o['you_say'] }}</div>
+                    @endforeach
+                    <div class="caption">Goal: {{ $lead->call_script['goal'] ?? 'Book a 15-minute strategy call' }} · written <x-time :at="$lead->call_script_at" /></div>
+                </div>
+            @else
+                <div class="caption">No script yet. One is written automatically when the lead goes to a CRM call list.</div>
+            @endif
+            @can('edit')
+                <form method="post" action="{{ route('scripts.write', $lead) }}" style="margin-top: 8px">
+                    @csrf
+                    <button type="submit" class="btn btn--ghost btn--sm" data-busy="Writing…">{{ $lead->call_script ? 'Rewrite script' : 'Write script now' }}</button>
+                </form>
+            @endcan
+        @endif
+
         @php $calls = $lead->calls()->limit(10)->get(); @endphp
         @if ($calls->isNotEmpty())
             <h3 class="profile__subhead">Calls <span class="caption">from the CRM</span></h3>
